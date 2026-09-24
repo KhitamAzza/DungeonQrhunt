@@ -696,11 +696,27 @@ if (bombPenaltyText) {
     document.body.classList.add('screen-shake');
     setTimeout(() => document.body.classList.remove('screen-shake'), 300);
 
-    const bombFrames = (window.ASSET_CONFIG && window.ASSET_CONFIG.bomb_frames) || [
-        'assets/bomb_1.png', 'assets/bomb_2.png', 'assets/bomb_3.png', 'assets/bomb_4.png',
-        'assets/bomb_5.png', 'assets/bomb_6.png', 'assets/bomb_7.png', 'assets/bomb_8.png',
-        'assets/bomb_9.png', 'assets/bomb_10.png', 'assets/bomb_11.png', 'assets/bomb_12.png'
-    ];
+    // Grab the frame list first — we need frame 0 for the drop-in sprite,
+// since hardcoding the key 'bomb_1' makes resolveAssetUrl() guess the
+// path as 'assets/bomb_1.png', which breaks whenever the frames live
+// in a subfolder like assets/bomb/.
+const bombFrames = (window.ASSET_CONFIG && window.ASSET_CONFIG.bomb_frames) || [
+    'assets/bomb_1.png', 'assets/bomb_2.png', 'assets/bomb_3.png', 'assets/bomb_4.png',
+    'assets/bomb_5.png', 'assets/bomb_6.png', 'assets/bomb_7.png', 'assets/bomb_8.png',
+    'assets/bomb_9.png', 'assets/bomb_10.png', 'assets/bomb_11.png', 'assets/bomb_12.png'
+];
+
+// 1. Initial frame: Bomb drops in dynamically from top of screen
+if (bombFrames.length > 0 && window.bindPixelImage) {
+    window.bindPixelImage(bombSprite, bombFrames[0]);
+}
+bombSprite.classList.add('bomb-drop-in');
+await sleep(450);
+bombSprite.classList.remove('bomb-drop-in');
+
+// Impact rumble when landing
+document.body.classList.add('screen-shake');
+setTimeout(() => document.body.classList.remove('screen-shake'), 300);
     const bombFrameMs = (window.ASSET_CONFIG && window.ASSET_CONFIG.bomb_frame_ms) || 80; // 👈 CHANGE ANIMATION SPEED here (or in assets-config.js) — lower ms = faster
     const fullscreenLastFrame = (window.ASSET_CONFIG && window.ASSET_CONFIG.bomb_fullscreen_last_frame === true); // default OFF now — set bomb_fullscreen_last_frame: true in assets-config.js to bring it back
     const lastFrameLingerMs = (window.ASSET_CONFIG && window.ASSET_CONFIG.bomb_last_frame_ms) || 700;

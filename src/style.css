@@ -437,9 +437,12 @@ section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-are
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     text-align: center;
     margin: 0 auto;
+}
+.student-action-row {
+    margin-top: 10px;
 }
 .scanner-container h3 {
     font-family: var(--font-pixel);
@@ -1225,9 +1228,13 @@ section#teacher-dashboard:nth-of-type(3) > main:nth-of-type(1) > div#tab-leaderb
         font-size: 10px;
         padding: 5px 8px;
     }
-    .chest-sprite, .folded-scroll-sprite, .bomb-sprite {
-        width: 140px;
-        height: 140px;
+    .chest-sprite, .folded-scroll-sprite {
+    width: 140px;
+    height: 140px;
+    }
+    .bomb-sprite {
+    width: 300px;
+    height: 300px;
     }
     .parchment-container {
         padding: 18px 14px;
