@@ -66,19 +66,19 @@ window.ASSET_CONFIG = {
     // 12+ Frame Bomb Explosion Sequence
     // You can customize or add more frames here (e.g. 12, 16, 20+ frames)!
     bomb_frames: [
-        'assets/bomb_1.png',
-        'assets/bomb_2.png',
-        'assets/bomb_3.png',
-        'assets/bomb_4.png',
-        'assets/bomb_5.png',
-        'assets/bomb_6.png',
-        'assets/bomb_7.png',
-        'assets/bomb_8.png',
-        'assets/bomb_9.png',
-        'assets/bomb_10.png',
-        'assets/bomb_11.png',
-        'assets/bomb_12.png',
-        'assets/bomb_13.png'
+        'assets/bomb/bomb_1.png',
+        'assets/bomb/bomb_2.png',
+        'assets/bomb/bomb_3.png',
+        'assets/bomb/bomb_4.png',
+        'assets/bomb/bomb_5.png',
+        'assets/bomb/bomb_6.png',
+        'assets/bomb/bomb_7.png',
+        'assets/bomb/bomb_8.png',
+        'assets/bomb/bomb_9.png',
+        'assets/bomb/bomb_10.png',
+        'assets/bomb/bomb_11.png',
+        'assets/bomb/bomb_12.png',
+        'assets/bomb/bomb_13.png'
         ],
     bomb_frame_ms: 200, // Frame duration during explosion build-up. Lower = faster animation, higher = slower.
     bomb_fullscreen_last_frame: false, // TRUE: the final frame covers the entire screen. FALSE (default): sprite stays normal size, screen shake alone sells the impact.
