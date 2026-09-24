@@ -1,0 +1,29 @@
+{
+  "common": [
+    { "item_id": "sandalswallow", "name": "Sandal Suwaloow", "description": "Pasangan hilang entah kemana", "minPercent": 0.75, "image": "assets/items/sandalswallow.png" },
+    { "item_id": "snek", "name": "Snek populer", "description": "Jadi rebutan di koperasi", "minPercent": 0.4, "image": "assets/items/snek.png" },
+    { "item_id": "es_teh_manis", "name": "Sweet Es teh", "description": "Menyegarkan jiwa yang bersedih", "minPercent": 0, "image": "assets/items/es_teh_manis.png" }
+  ],
+  "rare": [
+    { "item_id": "parfum", "name": "Parfum mahal", "description": "Membuatmu wangi dan disukai banyak orang", "minPercent": 0.75, "image": "assets/items/parfum.png" },
+    { "item_id": "dasi", "name": "Dasi kebanggaan", "description": "jika tidak ada tatib bertindak.", "minPercent": 0.4, "image": "assets/items/dasi.png" },
+    { "item_id": "kunci", "name": "Kunci emas", "description": "bisa membuka pintu disekitar sini", "minPercent": 0, "image": "assets/items/kunci.png" }
+  ],
+  "epic": [
+    { "item_id": "router", "name": "Router Fb LING", "description": "Sipaling dicari kaum mendang-mending.", "minPercent": 0.8, "image": "assets/items/router.png" },
+    { "item_id": "TWSkaumhave", "name": "TWS Kaum Have", "description": "Favorit GenZ biar keliatan kaum HAVE", "minPercent": 0.6, "image": "assets/items/TWSkaumhave.png" },
+    { "item_id": "chargerhp", "name": "Charger HP langka", "description": "Teman setia yang dipake rebutan genZ.", "minPercent": 0.4, "image": "assets/items/chargerhp.png" },
+    { "item_id": "micpenaikihsg", "name": "Mic pengguncang negara", "description": "sekali bicara kiamat maju 1 hari", "minPercent": 0.2, "image": "assets/items/micpenaikihsg.png" }
+  ],
+  "legendary": [
+    { "item_id": "kopyah", "name": "Songkok Pak Rahmad", "description": "Songkok misterius pak rahmad yang tahan banting.", "minPercent": 0.8, "image": "assets/items/kopyah.png" },
+    { "item_id": "hpkuat", "name": "HP Nokia 3310", "description": "Konon katanya tidak bisa dihancurkan oleh tangan manusia biasa.", "minPercent": 0.4, "image": "assets/items/hpkuat.png" },
+    { "item_id": "kamerabunabila", "name": "Kamera bu Nabila", "description": "Lebih tajam dari mata elang, bisa melihat masa depan.", "minPercent": 0, "image": "assets/items/kamerabunabila.png" }
+  ],
+  "mythic": [
+    { "item_id": "mahkota", "name": "Mahkota raja", "description": "Lebih berharga daripada kebun sawit", "minPercent": 0.75, "image": "assets/items/mahkota.png" },
+    { "item_id": "buku_ala_ala", "name": "Buku ala-ala", "description": "saat buku ini tercipta 5 gunung meletus, dan hutan terbakar", "minPercent": 0.4, "image": "assets/items/buku_ala_ala.png" },
+    { "item_id": "ijazah", "name": "Ijazah yang hilang", "description": "Sepertinya ini milik seseorang..", "minPercent": 0.15, "image": "assets/items/ijazah.png" },
+    { "item_id": "malapangankerja", "name": "Map yang dijanjikan", "description": "bisa digunakan mencari 19 juta lapangan pekerjaan.", "minPercent": 0, "image": "assets/items/malapangankerja.png" }
+  ]
+}

@@ -1,0 +1,1246 @@
+/* =============================================================================
+   RETRO TREASURE HUNT - WARM NOSTALGIC PIXEL ART STYLESHEET
+   Aesthetic: 8-bit/16-bit RPG Dungeon & Ancient Parchment Adventure
+   Optimized for: Ultra-lightweight payload & 60fps on older mobile devices
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Cinzel:wght@600;700;900&family=IM+Fell+English:ital@0;1&display=swap');
+
+:root {
+    /* Warm, Nostalgic Palette */
+    --gold-bright: #fcd053;
+    --gold-mid: #d99a26;
+    --gold-dark: #91610e;
+    
+    --wood-light: #523724;
+    --wood-mid: #382417;
+    --wood-dark: #21150c;
+    --wood-shadow: #140b06;
+
+    --parchment-light: #f7eedb;
+    --parchment-mid: #ebd8b6;
+    --parchment-border: #8b683e;
+    --ink-dark: #221810;
+    --ink-faded: #5a4533;
+
+    --green-emerald: #38b764;
+    --green-dark: #1b6633;
+    
+    --red-crimson: #d9383a;
+    --red-dark: #7a1517;
+
+    --cyan-mana: #22b2da;
+    --purple-relic: #9b51e0;
+
+    --bg-void: #120c08;
+    --card-bg: #261910;
+    --card-border: #4a3424;
+    --text-light: #f5ecd7;
+
+    /* Fonts */
+    --font-pixel: 'Press Start 2P', monospace, sans-serif;
+    --font-display: 'Cinzel', serif;
+    --font-reading: 'IM Fell English', Georgia, serif;
+}
+
+/* =============================================================================
+   1. RESET & BASE ARCHITECTURE (Zero Overhead)
+   ============================================================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-void);
+    background-image: 
+        radial-gradient(ellipse at 50% 15%, rgba(217, 154, 38, 0.16) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 85%, rgba(122, 21, 23, 0.12) 0%, transparent 60%),
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 2px, transparent 2px, transparent 4px);
+    background-attachment: fixed;
+    color: var(--text-light);
+    font-family: var(--font-reading);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* Crisp Pixel Art Rendering Everywhere */
+img, svg, canvas, .pixel-art {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* Screen Management */
+.screen {
+    display: none !important;
+    width: 100%;
+}
+.screen.active {
+    display: block !important;
+}
+
+/* =============================================================================
+   2. RETRO PIXEL BUTTONS & INPUTS
+   ============================================================================= */
+.btn-primary, .btn-logout, .option-btn, .btn-retro-sound, .tab-btn {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    position: relative;
+    text-transform: uppercase;
+    transition: transform 0.08s ease, filter 0.1s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    touch-action: manipulation;
+}
+
+/* Classic Beveled Gold Button */
+.btn-primary {
+    background-color: var(--gold-mid);
+    color: #21150c;
+    box-shadow: 
+        inset 2px 2px 0 var(--gold-bright),
+        inset -2px -2px 0 var(--gold-dark),
+        0 4px 0 #120b06;
+}
+.btn-primary:active {
+    transform: translateY(3px);
+    box-shadow: 
+        inset 2px 2px 0 var(--gold-dark),
+        inset -2px -2px 0 var(--gold-bright),
+        0 1px 0 #120b06;
+}
+
+/* Classic Crimson Danger/Back Button */
+.btn-logout {
+    background-color: var(--red-crimson);
+    color: #ffffff;
+    box-shadow: 
+        inset 2px 2px 0 #ff6b6d,
+        inset -2px -2px 0 var(--red-dark),
+        0 4px 0 #120b06;
+}
+.btn-logout:active {
+    transform: translateY(3px);
+    box-shadow: 
+        inset 2px 2px 0 var(--red-dark),
+        inset -2px -2px 0 #ff6b6d,
+        0 1px 0 #120b06;
+}
+
+/* Emerald Green Accent */
+.btn-emerald {
+    background-color: var(--green-emerald);
+    color: #0d2914;
+    box-shadow: 
+        inset 2px 2px 0 #6ee797,
+        inset -2px -2px 0 var(--green-dark),
+        0 4px 0 #120b06;
+}
+
+/* Sound Toggle Mini Button */
+.btn-retro-sound {
+    background: var(--wood-mid);
+    color: var(--gold-bright);
+    padding: 8px 10px;
+    font-size: 13px;
+    border: 2px solid var(--wood-light);
+    box-shadow: 0 2px 0 #000;
+}
+
+/* Retro Inputs */
+input[type="text"], input[type="password"], input[type="number"] {
+    background-color: #120b06;
+    color: var(--text-light);
+    border: 2px solid var(--card-border);
+    padding: 10px 14px;
+    font-size: 15px;
+    font-family: var(--font-reading);
+    border-radius: 0;
+    outline: none;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+    transition: border-color 0.15s ease;
+}
+input:focus {
+    border-color: var(--gold-mid);
+}
+
+/* =============================================================================
+   3. SCREEN 1: LOGIN (Dungeon Entrance Vault)
+   ============================================================================= */
+section#login-screen:nth-of-type(1),
+#login-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+section#login-screen:nth-of-type(1).active,
+#login-screen.active {
+    display: flex !important;
+}
+section#login-screen:nth-of-type(1):not(.active),
+#login-screen:not(.active) {
+    display: none !important;
+}
+
+.login-container {
+    max-width: 440px;
+    width: 100%;
+    background-color: var(--card-bg);
+    border: 4px solid var(--wood-light);
+    box-shadow: 
+        0 0 0 4px #120b06,
+        0 12px 36px rgba(0,0,0,0.85),
+        inset 0 0 25px rgba(217, 154, 38, 0.08);
+    padding: 34px 24px;
+    text-align: center;
+    position: relative;
+}
+
+/* Retro Crest Banner */
+.login-header-crest {
+    font-size: 42px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 4px 0 #000);
+}
+
+.login-container h1 {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    color: var(--gold-bright);
+    text-shadow: 2px 2px 0 #000;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+.login-container p {
+    font-size: 16px;
+    color: var(--text-light);
+    opacity: 0.85;
+    margin-bottom: 22px;
+    font-style: italic;
+}
+
+.login-container input {
+    width: 100%;
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+.login-container .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 13px;
+}
+
+/* =============================================================================
+   4. SCREEN 2: STUDENT DASHBOARD (Optimized One-Screen HUD)
+   ============================================================================= */
+section#student-dashboard:nth-of-type(2).active,
+#student-dashboard.active {
+    display: flex !important;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+section#student-dashboard:nth-of-type(2):not(.active),
+#student-dashboard:not(.active) {
+    display: none !important;
+}
+
+/* Top Bar HUD */
+.student-header {
+    background-color: var(--wood-dark);
+    border-bottom: 3px solid var(--wood-light);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+.user-info h2 {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: var(--gold-bright);
+    text-shadow: 1px 1px 0 #000;
+}
+.user-info p {
+    font-size: 13px;
+    color: var(--text-light);
+    opacity: 0.75;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Timer Badge */
+.timer-badge {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    background-color: #120b06;
+    color: var(--gold-bright);
+    border: 2px solid var(--gold-dark);
+    padding: 7px 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+}
+
+/* Announcement Ticker */
+.announcement-ticker {
+    background: linear-gradient(90deg, #2b1c11, #3b281b, #2b1c11);
+    border-bottom: 2px solid var(--gold-dark);
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gold-bright);
+    position: relative;
+    flex-shrink: 0;
+}
+.announcement-ticker .ticker-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+}
+#announcement-history-toggle {
+    background: transparent;
+    border: 1px solid var(--gold-mid);
+    color: var(--gold-bright);
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+#announcement-history-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 10px;
+    width: 300px;
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 3px solid var(--wood-light);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    z-index: 100;
+}
+.announcement-history-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+}
+.announcement-history-time {
+    color: var(--gold-bright);
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* Progress Tracker */
+.progress-tracker {
+    background-color: var(--card-bg);
+    padding: 8px 16px;
+    border-bottom: 2px solid var(--wood-light);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+}
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    color: var(--gold-bright);
+}
+.progress-bar-container {
+    width: 100%;
+    height: 14px;
+    background-color: #120b06;
+    border: 2px solid var(--card-border);
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-bright));
+    transition: width 0.4s ease;
+}
+
+/* Student Main Workspace */
+section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) {
+    height: 400px;
+    max-height: calc(100dvh - 120px);
+    overflow: hidden !important;
+}
+.student-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 8px 12px;
+}
+
+/* Scanner Container */
+section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-area:nth-of-type(1) {
+    height: 300px;
+    color: #f5e7d7;
+    width: 346.2px;
+    max-width: 100%;
+    overflow: hidden !important;
+}
+.scanner-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden !important;
+    background-color: var(--card-bg);
+    border: 3px solid var(--wood-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    margin: 0 auto;
+}
+.scanner-container h3 {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: var(--gold-bright);
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+#reader {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: min(280px, 80vw);
+    height: 100%;
+    border: 2px dashed var(--gold-dark);
+    background-color: #000000;
+    overflow: hidden;
+    margin: 2px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#reader video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+/* Action Buttons Row */
+.student-action-row {
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 6px 0 0 0;
+    width: 100%;
+}
+.student-action-row .btn-primary {
+    flex: 1;
+    max-width: 160px;
+    padding: 8px 10px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+/* Manual Entry fallback (Deprecated - replaced by Kode Sakti) */
+section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-area:nth-of-type(1) > div:nth-of-type(3) > input#manual-qr-input:nth-of-type(1),
+section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-area:nth-of-type(1) > div:nth-of-type(3),
+.manual-entry {
+    display: none !important;
+}
+
+/* =============================================================================
+   5. INTERACTIVE CHEST, SCROLL & PARCHMENT OVERLAYS
+   ============================================================================= */
+.chest-overlay, .scroll-overlay, .parchment-overlay, .bomb-overlay,
+.locked-overlay, .hint-overlay, .loot-modal, .inventory-modal,
+.item-detail-modal, .secret-code-modal, .finish-overlay, .game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 6, 4, 0.92);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
+    padding: 16px;
+}
+
+/* Hidden Utility */
+.hidden {
+    display: none !important;
+}
+
+/* Chest Container */
+.chest-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 90%;
+}
+.chest-suspense-text {
+    font-family: var(--font-pixel);
+    font-size: 12px;
+    color: var(--gold-bright);
+    margin-bottom: 24px;
+    text-shadow: 2px 2px 0 #000;
+    line-height: 1.6;
+    min-height: 2em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.chest-suspense-text.visible {
+    opacity: 1;
+}
+
+.chest-sprite {
+    width: 180px;
+    height: 180px;
+    cursor: pointer;
+    filter: drop-shadow(0 10px 0 rgba(0,0,0,0.7));
+    transition: transform 0.15s ease;
+}
+.chest-sprite:hover {
+    transform: scale(1.05);
+}
+
+/* Chest Glow Effect */
+.chest-glow-effect {
+    animation: pixel-pulse 1s infinite alternate ease-in-out;
+}
+@keyframes pixel-pulse {
+    0% { filter: drop-shadow(0 0 6px var(--gold-mid)) drop-shadow(0 10px 0 #000); }
+    100% { filter: drop-shadow(0 0 24px var(--gold-bright)) drop-shadow(0 10px 0 #000) brightness(1.2); }
+}
+
+/* Chest Shake */
+.chest-shake-css {
+    animation: pixel-shake 0.12s infinite;
+}
+@keyframes pixel-shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-4px, 2px); }
+    50% { transform: translate(4px, -2px); }
+    75% { transform: translate(-3px, -2px); }
+    100% { transform: translate(3px, 3px); }
+}
+
+/* Retro Tap Instructions */
+.retro-instruction {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: var(--gold-bright);
+    margin-top: 20px;
+    text-shadow: 2px 2px 0 #000;
+    animation: blink 0.8s infinite alternate;
+}
+@keyframes blink {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+/* Folded Scroll */
+.folded-scroll-sprite {
+    width: 180px;
+    height: 180px;
+    cursor: pointer;
+    animation: float 2s infinite ease-in-out;
+    filter: drop-shadow(0 10px 0 rgba(0,0,0,0.8));
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Parchment Question Sheet */
+.parchment-container {
+    position: relative;
+    max-width: 500px;
+    width: 95%;
+    background-color: var(--parchment-light);
+    border: 6px solid var(--parchment-border);
+    box-shadow: 
+        0 0 0 4px #120b06,
+        0 16px 40px rgba(0,0,0,0.9);
+    padding: 24px 20px;
+    color: var(--ink-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.parchment-rarity-badge {
+    font-family: var(--font-pixel);
+    font-size: 10px;
+    padding: 5px 12px;
+    border: 2px solid var(--ink-dark);
+    color: #ffffff;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+#parchment-q-text {
+    font-family: var(--font-reading);
+    font-size: 18px;
+    line-height: 1.4;
+    font-weight: bold;
+    color: var(--ink-dark);
+    margin-bottom: 16px;
+}
+#parchment-q-text.time-up-text {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    color: var(--red-crimson) !important;
+}
+
+/* Parchment Tension Timer */
+.parchment-timer-container {
+    width: 100%;
+    height: 16px;
+    background-color: var(--parchment-mid);
+    border: 2px solid var(--ink-dark);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.parchment-timer-bar {
+    height: 100%;
+    width: 100%;
+    background-color: var(--green-emerald);
+    transition: width 0.1s linear, background-color 0.3s;
+}
+.parchment-timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    color: var(--ink-dark);
+}
+
+/* Question Option Buttons (RPG Dialogue Style) */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+.option-btn {
+    background-color: var(--parchment-mid);
+    color: var(--ink-dark);
+    border: 2px solid var(--ink-dark);
+    font-family: var(--font-reading);
+    font-size: 16px;
+    font-weight: bold;
+    text-align: left;
+    padding: 10px 14px;
+    width: 100%;
+    box-shadow: 0 3px 0 var(--ink-faded);
+    display: block;
+    line-height: 1.3;
+}
+.option-btn:hover {
+    background-color: #dfc89d;
+}
+.option-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink-faded);
+}
+
+/* =============================================================================
+   6. BOMB TRAP & FULL SCREEN EFFECTS
+   ============================================================================= */
+.bomb-sprite {
+    width: 180px;   /* 👈 CHANGE BOMB SIZE here (and height below, keep them matching) */
+    height: 180px;
+    filter: drop-shadow(0 8px 0 rgba(0,0,0,0.8));
+    image-rendering: pixelated;
+    transition: width 0.05s, height 0.05s; /* only affects the width/height jump if/when .bomb-sprite-fullscreen toggles on — NOT frame-to-frame speed, that's bomb_frame_ms in assets-config.js */
+}
+
+/* Climax Full-Screen Blast Frame (Covering 100% of the viewport) */
+.bomb-sprite.bomb-sprite-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    object-fit: cover !important;
+    z-index: 10002 !important;
+    filter: brightness(1.25) contrast(1.15) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.bomb-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ff0000; /* 👈 CHANGE FLASH COLOR here */
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10001;
+}
+.bomb-flash.flash-active {
+    animation: flash-red 0.5s ease-out; /* 👈 CHANGE FLASH DURATION here (0.5s) */
+}
+@keyframes flash-red {
+    0% { opacity: 0.85; } /* 👈 CHANGE PEAK INTENSITY here (0 = invisible, 1 = fully opaque) */
+    100% { opacity: 0; }
+}
+
+/* Fullscreen Rarity Flash for Chest Open -> Question Transition */
+.screen-rarity-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ffffff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10005;
+}
+.screen-rarity-flash.flash-active {
+    animation: rarity-flash-burst 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+@keyframes rarity-flash-burst {
+    0% { opacity: 0.95; }
+    40% { opacity: 0.8; }
+    100% { opacity: 0; }
+}
+
+/* Bomb Drop-in From Top of Screen */
+.bomb-sprite.bomb-drop-in {
+    animation: bomb-fall-down 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes bomb-fall-down {
+    0% {
+        transform: translateY(-110vh) scale(0.6) rotate(-20deg);
+        opacity: 0;
+    }
+    65% {
+        transform: translateY(20px) scale(1.15) rotate(6deg);
+        opacity: 1;
+    }
+    85% {
+        transform: translateY(-10px) scale(0.95) rotate(-3deg);
+    }
+    100% {
+        transform: translateY(0) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.bomb-message {
+    background-color: var(--card-bg);
+    border: 4px solid var(--red-crimson);
+    padding: 24px;
+    text-align: center;
+    margin-top: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.9);
+}
+.bomb-message h2 {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    color: var(--red-crimson);
+    margin-bottom: 8px;
+}
+.bomb-message p {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+/* Shake Utility */
+.screen-shake {
+    animation: shake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake {
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80% { transform: translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+    40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
+/* Violent Rumble for Fullscreen Explosion Climax — triggered dynamically from
+   student.js (see "SHAKE START" in playBombSequence), not tied to any fixed frame here.
+   0.08s = how fast it judders (lower = more frantic); px values in the keyframes below = how hard it shakes. */
+.screen-shake-heavy {
+    animation: screen-rumble-heavy 0.08s infinite both !important;
+}
+@keyframes screen-rumble-heavy {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-8px, 6px) rotate(-1deg); }
+    40% { transform: translate(8px, -6px) rotate(1deg); }
+    60% { transform: translate(-6px, -6px) rotate(0.5deg); }
+    80% { transform: translate(6px, 6px) rotate(-0.5deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* =============================================================================
+   7. LOOT DROP & INVENTORY MODALS
+   ============================================================================= */
+.loot-content, .inventory-content, .item-detail-content, .secret-code-content, .locked-content, .hint-content {
+    background-color: var(--card-bg);
+    border: 4px solid var(--wood-light);
+    box-shadow: 
+        0 0 0 4px #120b06,
+        0 14px 40px rgba(0,0,0,0.9);
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.loot-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 12px auto;
+}
+.loot-glow-aura {
+    position: absolute;
+    width: 125px;
+    height: 125px;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(14px);
+    opacity: 0.85;
+    animation: loot-aura-pulse 1.8s infinite alternate ease-in-out;
+}
+@keyframes loot-aura-pulse {
+    0% { transform: scale(0.85); opacity: 0.55; }
+    100% { transform: scale(1.22); opacity: 0.95; }
+}
+
+.loot-icon {
+    position: relative;
+    z-index: 1;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,0.7));
+    animation: item-hover-float 2.2s ease-in-out infinite; /* 👈 the hovering/floating effect on item reveal */
+}
+.detail-icon {
+    position: relative;
+    z-index: 1;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto;
+    filter: drop-shadow(0 6px 0 rgba(0,0,0,0.7));
+}
+@keyframes item-hover-float {
+    /* 👈 CHANGE HOVER HEIGHT/TILT here (-10px / ±2deg), and the animation's
+       2.2s duration above to make it float faster or slower */
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+}
+.loot-title, #detail-title {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    color: var(--gold-bright);
+    margin-bottom: 6px;
+}
+.loot-desc, .detail-desc {
+    font-style: italic;
+    opacity: 0.85;
+    font-size: 14px;
+    margin-bottom: 14px;
+    line-height: 1.4;
+}
+.loot-stats {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.loot-tier-badge, .loot-points-badge {
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    padding: 6px 10px;
+    border: 2px solid #000;
+}
+.loot-tier-badge {
+    background: #3b2a1c;
+    color: #fff;
+}
+.loot-points-badge {
+    background: var(--gold-mid);
+    color: #21150c;
+}
+
+/* Inventory Grid */
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--wood-light);
+    padding-bottom: 8px;
+}
+.inventory-header h2 {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    color: var(--gold-bright);
+}
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 18px;
+    cursor: pointer;
+}
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+    background-color: #120b06;
+    padding: 10px;
+    border: 2px solid var(--card-border);
+}
+.loot-slot {
+    background-color: var(--wood-mid);
+    border: 2px solid var(--wood-light);
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 2px 0 #000;
+}
+.loot-slot:hover {
+    border-color: var(--gold-mid);
+    transform: translateY(-2px);
+}
+.loot-slot img {
+    width: 44px;
+    height: 44px;
+}
+.loot-slot .loot-count {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: var(--gold-bright);
+    background: rgba(0,0,0,0.8);
+    padding: 2px 4px;
+}
+
+/* =============================================================================
+   8. FINISH & GAME OVER SCREENS
+   ============================================================================= */
+.finish-content {
+    background-color: var(--card-bg);
+    border: 5px solid var(--gold-mid);
+    box-shadow: 0 0 40px rgba(217, 154, 38, 0.4);
+    padding: 30px 20px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+}
+.finish-content h1 {
+    font-family: var(--font-pixel);
+    font-size: 16px;
+    color: var(--gold-bright);
+    margin-bottom: 12px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+}
+.stat-box {
+    background-color: #120b06;
+    border: 2px solid var(--wood-light);
+    padding: 10px 8px;
+}
+.stat-box h3 {
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: var(--text-light);
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+.stat-box p {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    color: var(--gold-bright);
+}
+
+/* =============================================================================
+   9. TEACHER DASHBOARD (Control Panel & Config Editor)
+   ============================================================================= */
+section#teacher-dashboard:nth-of-type(3).active,
+#teacher-dashboard.active {
+    display: block !important;
+    min-height: 100vh;
+    width: 100%;
+}
+section#teacher-dashboard:nth-of-type(3):not(.active),
+#teacher-dashboard:not(.active) {
+    display: none !important;
+}
+
+.teacher-header {
+    background-color: var(--wood-dark);
+    border-bottom: 3px solid var(--wood-light);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+.teacher-header h1 {
+    font-family: var(--font-pixel);
+    font-size: 14px;
+    color: var(--gold-bright);
+}
+section#teacher-dashboard:nth-of-type(3) > main:nth-of-type(1),
+.teacher-main {
+    max-width: 1100px;
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+/* Teacher Tabs */
+.teacher-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 3px solid var(--wood-light);
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+.tab-btn {
+    background: transparent;
+    border-bottom: 3px solid transparent;
+    color: var(--text-light);
+    opacity: 0.6;
+    padding: 10px 16px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+.tab-btn.active-tab {
+    opacity: 1;
+    color: var(--gold-bright);
+    background-color: var(--wood-mid);
+    border-bottom: 3px solid var(--gold-bright);
+}
+
+.tab-content {
+    display: none;
+}
+.tab-content.active-tab-content {
+    display: block;
+}
+
+/* Panels */
+section#teacher-dashboard:nth-of-type(3) > main:nth-of-type(1) > div#tab-leaderboard:nth-of-type(2) > div:nth-of-type(1) {
+    font-weight: normal;
+    font-family: Courier New;
+    font-size: 11px;
+}
+.control-panel, .leaderboard-panel {
+    background-color: var(--card-bg);
+    border: 3px solid var(--wood-light);
+    padding: 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    margin-bottom: 20px;
+}
+.control-panel h2, .leaderboard-panel h2 {
+    font-family: var(--font-pixel);
+    font-size: 13px;
+    color: var(--gold-bright);
+    margin-bottom: 16px;
+}
+
+.control-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.control-row input {
+    width: 90px;
+}
+
+/* Leaderboard Table */
+.table-container {
+    overflow-x: auto;
+}
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+}
+#leaderboard-table th {
+    background-color: #120b06;
+    color: var(--gold-bright);
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--wood-light);
+}
+#leaderboard-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--card-border);
+    font-variant-numeric: tabular-nums;
+}
+#leaderboard-table tr:nth-child(even) {
+    background: rgba(255,255,255,0.02);
+}
+#leaderboard-table tr:first-child td {
+    font-weight: bold;
+    color: var(--gold-bright);
+}
+
+/* Config Grid */
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.config-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+/* Asset Studio Grid */
+.asset-studio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+.asset-studio-card {
+    background: #120b06;
+    border: 2px solid var(--wood-light);
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.asset-studio-card img {
+    width: 64px;
+    height: 64px;
+    border: 1px solid #333;
+    background: #1b120c;
+}
+.asset-studio-card span {
+    font-family: var(--font-pixel);
+    font-size: 8px;
+    color: var(--gold-bright);
+    word-break: break-all;
+}
+
+/* =============================================================================
+   10. MOBILE OPTIMIZATIONS (OLDER PHONES FRIENDLY)
+   ============================================================================= */
+@media (max-width: 600px) {
+    .btn-primary, .btn-logout, .option-btn {
+        padding: 10px 14px;
+        font-size: 10px;
+    }
+    .student-header {
+        padding: 8px 12px;
+    }
+    .user-info h2 {
+        font-size: 10px;
+    }
+    .timer-badge {
+        font-size: 10px;
+        padding: 5px 8px;
+    }
+    .chest-sprite, .folded-scroll-sprite, .bomb-sprite {
+        width: 140px;
+        height: 140px;
+    }
+    .parchment-container {
+        padding: 18px 14px;
+    }
+    #parchment-q-text {
+        font-size: 16px;
+    }
+    .option-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+    .teacher-header {
+        padding: 12px 16px;
+    }
+    .teacher-header h1 {
+        font-size: 11px;
+    }
+}

@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Berburu Harta Qrun - Retro Treasure Hunt</title>
+  <meta name="description" content="A retro pixel art treasure hunt quiz game with smooth performance, QR scanner support, interactive chests, loot collection, and teacher controls." />
+  <meta property="og:title" content="Berburu Harta Qrun - Retro Treasure Hunt" />
+  <meta property="og:description" content="A retro pixel art treasure hunt quiz game with smooth performance, QR scanner support, interactive chests, loot collection, and teacher controls." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Preconnect for Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Lightweight Traditional Retro CSS -->
+  
+
+  <!-- Lightweight Standalone HTML5 QR Scanner -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+
+  <!-- =========================================================================
+       SCREEN 1: LOGIN SCREEN
+       ========================================================================= -->
+  <section id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-header-crest">🗝️</div>
+      <h1>BERBURU HARTA QRUN</h1>
+      <p>Petualangan Menemukan Harta Karun & Mencari nilai</p>
+      
+      <div style="margin-bottom: 16px;">
+        <input 
+          type="password" 
+          id="password-input" 
+          placeholder="MASUKKAN KODE SAKTI" 
+          autocomplete="off" 
+          autocapitalize="characters"
+        />
+      </div>
+
+      <button id="login-btn" class="btn-primary">MASUK KE GAME</button>
+
+      <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; opacity: 0.7;">
+        <span>By Chusnul Khitam Azza,S.Kom</span>
+        <button id="sound-toggle-btn" class="btn-retro-sound" title="Toggle Suara" aria-label="Toggle Suara">🔊</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SCREEN 2: STUDENT DASHBOARD
+       ========================================================================= -->
+  <section id="student-dashboard" class="screen">
+    <!-- Top Header Bar -->
+    <header class="student-header">
+      <div class="user-info">
+        <h2 id="display-name">PEMBURU HARTA</h2>
+        <p id="display-class">Kelas 0</p>
+      </div>
+
+      <div class="header-actions">
+        <div id="student-timer" class="timer-badge">⏳ 00:00</div>
+        <button id="logout-btn" class="btn-logout" title="Keluar">LOGOUT</button>
+      </div>
+    </header>
+
+    <!-- Announcement Ticker Bar -->
+    <div id="announcement-ticker" class="announcement-ticker hidden">
+      <span>📢</span>
+      <span id="announcement-text" class="ticker-text">Menunggu pengumuman...</span>
+      <button id="announcement-history-toggle" title="Riwayat Pengumuman">📜</button>
+      <div id="announcement-history-dropdown" class="hidden"></div>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div id="progress-tracker" class="progress-tracker">
+      <div class="progress-header">
+        <span>HARTA DITEMUKAN</span>
+        <span>0 / 0 PETI</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Student Main Viewport -->
+    <main class="student-main">
+      <div id="scanner-area" class="scanner-container">
+        <h3>ARAHKAN KE QR CODE PETI</h3>
+        <div id="reader"></div>
+
+        <div class="student-action-row">
+          <button id="secret-code-btn" class="btn-primary">🔢 KODE SAKTI</button>
+          <button id="open-inventory-btn" class="btn-primary" style="background-color: var(--wood-mid); color: var(--gold-bright); border: 2px solid var(--gold-mid);">🎒 TAS HARTA</button>
+        </div>
+      </div>
+
+      <!-- Question Modal (Fallback / Direct Error Display) -->
+      <div id="question-modal" class="hidden" style="margin-top: 14px; background: var(--card-bg); border: 3px solid var(--wood-light); padding: 16px; text-align: center;">
+        <h3 id="q-text" style="font-family: var(--font-reading); font-size: 16px; margin-bottom: 12px;">Memuat soal...</h3>
+        <div id="q-options" class="options-grid"></div>
+      </div>
+
+      <div id="feedback-area" class="hidden" style="margin-top: 10px; text-align: center;">
+        <p id="feedback-text" style="font-family: var(--font-pixel); font-size: 11px;"></p>
+      </div>
+    </main>
+  </section>
+
+  <!-- =========================================================================
+       SCREEN 3: TEACHER DASHBOARD
+       ========================================================================= -->
+  <section id="teacher-dashboard" class="screen">
+    <header class="teacher-header">
+      <h1>KONTROL PETUALANGAN (GURU)</h1>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="teacher-sound-toggle-btn" class="btn-retro-sound" title="Toggle Suara">🔊</button>
+        <button id="teacher-logout-btn" class="btn-logout">LOGOUT</button>
+      </div>
+    </header>
+
+    <main class="teacher-main">
+      <!-- Tabs Navigation -->
+      <nav class="teacher-tabs">
+        <button class="tab-btn active-tab" data-tab="tab-controls">⚙️ KONTROL WAKTU</button>
+        <button class="tab-btn" data-tab="tab-leaderboard">🏆 LEADERBOARD</button>
+        <button class="tab-btn" data-tab="tab-config">📜 ATURAN GAME</button>
+        <button class="tab-btn" data-tab="tab-assets">🎨 ASSET STUDIO</button>
+        <button class="tab-btn" data-tab="tab-danger">⚠️ DANGER ZONE</button>
+      </nav>
+
+      <!-- Tab 1: Game Controls -->
+      <div id="tab-controls" class="tab-content active-tab-content">
+        <div class="control-panel">
+          <h2>STATUS & DURASI PETUALANGAN</h2>
+          <p id="game-status-text" style="font-family: var(--font-pixel); font-size: 11px; margin-bottom: 16px; color: var(--gold-bright);">
+            Memeriksa status permainan...
+          </p>
+
+          <div class="control-row">
+            <label style="font-size: 13px;">Durasi Sesi (Menit):</label>
+            <input type="number" id="game-duration" value="30" min="1" max="180" />
+            <button id="start-game-btn" class="btn-primary">▶️ MULAI GAME</button>
+            <button id="stop-game-btn" class="btn-logout">⏹️ HENTIKAN SEKARANG</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Leaderboard & Export -->
+      <div id="tab-leaderboard" class="tab-content">
+        <div class="leaderboard-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h2>KLASEMEN SEMENTARA</h2>
+            <div style="display: flex; gap: 8px;">
+              <button id="refresh-scores-btn" class="btn-primary" style="padding: 8px 12px; font-size: 10px;">🔄 REFRESH</button>
+              <button id="export-sheets-btn" class="btn-emerald" style="padding: 8px 12px; font-size: 10px;">📊 EXPORT SHEETS</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table id="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>RANK</th>
+                  <th>NAMA PEMBURU</th>
+                  <th>KELAS</th>
+                  <th>POIN / MAX</th>
+                  <th>PERSENTASE</th>
+                  <th>GELAR</th>
+                </tr>
+              </thead>
+              <tbody id="leaderboard-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 20px; color: var(--gold-bright);">Klik "REFRESH" untuk memuat klasemen.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Game Config Editor -->
+      <div id="tab-config" class="tab-content">
+        <div class="control-panel">
+          <h2>KONFIGURASI ATURAN & SKOR</h2>
+          
+          <div id="config-lock-notice" class="hidden" style="background: rgba(217, 56, 58, 0.2); border: 2px solid var(--red-crimson); padding: 10px; margin-bottom: 16px; font-size: 13px; color: #ff9999;">
+            🔒 Konfigurasi dikunci saat permainan sedang aktif. Hentikan permainan terlebih dahulu untuk mengubah aturan.
+          </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">1. POIN PER RARITY PETI</h3>
+          <div class="config-grid">
+            <label>Common: <input type="number" id="cfg-points-common" min="1"></label>
+            <label>Rare: <input type="number" id="cfg-points-rare" min="1"></label>
+            <label>Epic: <input type="number" id="cfg-points-epic" min="1"></label>
+            <label>Legendary: <input type="number" id="cfg-points-legendary" min="1"></label>
+            <label>Mythic: <input type="number" id="cfg-points-mythic" min="1"></label>
+          </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">2. BATAS WAKTU JAWAB (DETIK)</h3>
+          <div class="config-grid">
+            <label>Common: <input type="number" id="cfg-time-common" min="1"></label>
+            <label>Rare: <input type="number" id="cfg-time-rare" min="1"></label>
+            <label>Epic: <input type="number" id="cfg-time-epic" min="1"></label>
+            <label>Legendary: <input type="number" id="cfg-time-legendary" min="1"></label>
+            <label>Mythic: <input type="number" id="cfg-time-mythic" min="1"></label>
+          </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">3. TIER MULTIPLIER KECEPATAN JAWAB</h3>
+          <div id="speed-thresholds-list" style="margin-bottom: 10px;"></div>
+          <button id="add-speed-threshold-btn" type="button" class="btn-primary" style="padding: 6px 10px; font-size: 9px; margin-bottom: 16px;">+ TAMBAH TIER</button>
+
+        <!-- 🔁 NEW: Redemption Toggle -->
+        <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">4. SISTEM REDEMPTION (JAWABAN SALAH)</h3>
+        <div style="margin-bottom: 18px;">
+        <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+        <input
+         type="checkbox"
+          id="cfg-redemption-enabled"
+          style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold-mid);"
+          >
+          Aktifkan Redemption (boleh coba lagi jika jawaban salah)
+      </label>
+      <p style="font-size: 12px; opacity: 0.7; margin-top: 6px; margin-left: 26px; line-height: 1.4;">
+       ✅ <strong>Aktif:</strong> Jawaban salah = percobaan ulang dengan multiplier bertingkat
+       (1× salah → 0.7x poin, 2× salah → 0.5x poin, 3× salah → peti terkunci).<br>
+        ❌ <strong>Nonaktif:</strong> Jawaban salah langsung mengunci peti (perilaku lama).
+      </p>
+      </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">5. MULTIPLIER RETRY / TIMEOUT</h3>
+          <div class="config-grid">
+            <label>Timeout 0: <input type="number" id="cfg-timeout-0" step="0.1" min="0"></label>
+            <label>Timeout 1: <input type="number" id="cfg-timeout-1" step="0.1" min="0"></label>
+            <label>Timeout 2: <input type="number" id="cfg-timeout-2" step="0.1" min="0"></label>
+          </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">6. PENALTI PETI BOMB</h3>
+          <div style="margin-bottom: 18px;">
+            <label style="font-size: 13px;">Pengurangan Poin (Bomb): <input type="number" id="cfg-bomb-penalty" min="0" style="width: 100px; margin-left: 8px;"></label>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="save-config-btn" class="btn-primary">💾 SIMPAN ATURAN</button>
+            <span id="config-save-status" style="font-family: var(--font-pixel); font-size: 9px;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Asset Studio (Pixel Art Previewer & Testing) -->
+      <div id="tab-assets" class="tab-content">
+        <div class="control-panel">
+          <h2>🎨 ASSET STUDIO & PIXEL ART REGISTRY</h2>
+          <p style="font-size: 14px; opacity: 0.85; margin-bottom: 14px;">
+            Sistem ini menggunakan pixel art procedural SVG terintegrasi untuk kecepatan pemuatan instan tanpa jeda, serta menyediakan jalur custom asset via file <code>assets-config.js</code> jika kamu ingin menggunakan gambar pixel art sendiri.
+          </p>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;">
+            <button id="test-chest-btn" class="btn-primary" style="padding: 8px 12px; font-size: 10px;">🧪 TEST ANIMASI PETI</button>
+            <button id="test-bomb-btn" class="btn-logout" style="padding: 8px 12px; font-size: 10px;">💣 TEST LEDAKAN BOMB</button>
+          </div>
+
+          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin-bottom: 10px;">DAFTAR ASSET TERDAFTAR</h3>
+          <div id="asset-studio-grid" class="asset-studio-grid"></div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Danger Zone -->
+      <div id="tab-danger" class="tab-content">
+        <div class="control-panel" style="border-color: var(--red-crimson);">
+          <h2 style="color: var(--red-crimson);">⚠️ DANGER ZONE</h2>
+          <p style="font-size: 14px; margin-bottom: 16px; opacity: 0.85;">
+            Tindakan ini akan menghapus riwayat jawaban siswa, pengumuman, dan inventaris yang tersimpan di Firebase. Gunakan hanya saat ingin memulai sesi kuis yang sepenuhnya baru.
+          </p>
+          <button id="purge-submissions-btn" class="btn-logout">🗑️ BERSIHKAN SEMUA DATA SESI</button>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- =========================================================================
+       RETRO OVERLAYS & GAMEPLAY MODALS
+       ========================================================================= -->
+
+  <!-- Chest Opening Sequence Overlay -->
+  <div id="chest-overlay" class="chest-overlay hidden">
+    <div class="chest-container">
+      <p id="chest-suspense-text" class="chest-suspense-text"></p>
+      <img id="chest-sprite" class="chest-sprite" alt="Peti Harta" />
+      <p id="chest-instruction" class="retro-instruction">TAP UNTUK MEMBUKA!</p>
+      <button id="chest-back-btn" class="btn-logout hidden" style="margin-top: 18px; padding: 6px 12px; font-size: 9px;">KEMBALI</button>
+    </div>
+  </div>
+
+  <!-- Folded Scroll Overlay -->
+  <div id="scroll-overlay" class="scroll-overlay hidden">
+    <div class="chest-container">
+      <p class="chest-suspense-text visible">GULUNGAN KUNO DITEMUKAN!</p>
+      <img id="folded-scroll-sprite" class="folded-scroll-sprite" alt="Gulungan Soal" />
+      <p class="retro-instruction">TAP GULUNGAN UNTUK MEMBACA!</p>
+    </div>
+  </div>
+
+  <!-- Unrolled Parchment Question Overlay -->
+  <div id="parchment-overlay" class="parchment-overlay hidden">
+    <div class="parchment-container">
+      <div id="parchment-rarity-badge" class="parchment-rarity-badge">COMMON</div>
+
+      <div class="parchment-timer-container">
+        <div class="parchment-timer-bar"></div>
+        <div class="parchment-timer-text">30s</div>
+      </div>
+
+      <p id="parchment-instruction" class="retro-instruction hidden" style="color: var(--ink-dark); margin-bottom: 12px;"></p>
+
+      <div id="parchment-content" style="width: 100%;">
+        <p id="parchment-q-text">Teks pertanyaan kuis...</p>
+        <div id="parchment-q-options" class="options-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen Flash Overlays -->
+  <div id="screen-rarity-flash" class="screen-rarity-flash hidden"></div>
+  <div id="bomb-flash" class="bomb-flash hidden"></div>
+  <div id="bomb-overlay" class="bomb-overlay hidden">
+    <img id="bomb-sprite" class="bomb-sprite" alt="Bomb Meledak" />
+    <div id="bomb-message" class="bomb-message hidden">
+  <h2>BOOOM!! KAMU MEMBUKA JEBAKAN</h2>
+  <p id="bomb-penalty-text">-0 POIN DIPOTONG</p>
+</div>
+    </div>
+  </div>
+
+  <!-- Locked Chest Overlay -->
+  <div id="locked-overlay" class="locked-overlay hidden">
+    <div class="locked-content">
+      <div style="font-size: 48px; margin-bottom: 8px;">🔒</div>
+      <h2 style="font-family: var(--font-pixel); font-size: 13px; color: var(--gold-bright); margin-bottom: 8px;">PETI TERKUNCI!</h2>
+      <p style="font-size: 14px; opacity: 0.85; margin-bottom: 16px;">Peti ini sudah dibuka oleh pemburu lain atau batas maksimal pembukaan telah tercapai.</p>
+      <button id="locked-back-btn" class="btn-primary" style="padding: 10px 18px; font-size: 10px;">CARI PETI LAIN</button>
+    </div>
+  </div>
+
+  <!-- Hint Overlay -->
+  <div id="hint-overlay" class="hint-overlay hidden">
+    <div class="hint-content">
+      <div style="font-size: 48px; margin-bottom: 8px;">📜</div>
+      <h2 style="font-family: var(--font-pixel); font-size: 13px; color: var(--gold-bright); margin-bottom: 8px;">PETUNJUK RAHASIA!</h2>
+      <p id="hint-text" style="font-size: 15px; margin-bottom: 18px; font-style: italic; line-height: 1.4;"></p>
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button id="hint-back-btn" class="btn-primary" style="padding: 8px 14px; font-size: 10px;">MENGERTI</button>
+        <button id="hint-logout-btn" class="btn-logout" style="padding: 8px 14px; font-size: 10px;">LOGOUT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loot Reveal Modal -->
+  <div id="loot-reveal-modal" class="loot-modal hidden">
+    <div class="loot-content">
+      <h2 style="font-family: var(--font-pixel); font-size: 12px; color: var(--gold-bright);">HARTA DIDAPATKAN!</h2>
+      <div class="loot-icon-wrapper">
+        <div id="loot-glow-aura" class="loot-glow-aura"></div>
+        <img id="loot-icon" class="loot-icon" alt="Loot Item" />
+      </div>
+      <h3 id="loot-title" class="loot-title">Nama Harta</h3>
+      <p id="loot-desc" class="loot-desc">Deskripsi barang pusaka...</p>
+      <div class="loot-stats">
+        <span id="loot-tier" class="loot-tier-badge">COMMON DROP</span>
+        <span id="loot-points" class="loot-points-badge">+10 PTS</span>
+      </div>
+      <button id="loot-keep-btn" class="btn-primary" style="width: 100%; padding: 12px;">SIMPAN KE TAS</button>
+    </div>
+  </div>
+
+  <!-- Inventory / Tas Harta Modal -->
+  <div id="inventory-modal" class="inventory-modal hidden">
+    <div class="inventory-content" style="max-width: 440px;">
+      <div class="inventory-header">
+        <h2>🎒 TAS HARTA SAYA</h2>
+        <button id="close-inventory-btn" class="close-btn" aria-label="Tutup">✕</button>
+      </div>
+      
+      <p style="font-size: 13px; margin-bottom: 8px; text-align: left; opacity: 0.8;">
+        Total Nilai Harta: <strong id="inventory-total-value" style="color: var(--gold-bright);">0</strong> Pts
+      </p>
+
+      <div id="inventory-grid" class="inventory-grid"></div>
+
+      <button id="inventory-back-scanner" class="btn-primary" style="width: 100%; margin-top: 14px; font-size: 10px;">KEMBALI KE SCANNER</button>
+    </div>
+  </div>
+
+  <!-- Item Detail Modal -->
+  <div id="item-detail-modal" class="item-detail-modal hidden">
+    <div class="item-detail-content">
+      <img id="detail-icon" class="detail-icon" alt="Detail Item" />
+      <h3 id="detail-title" class="loot-title">Nama Harta</h3>
+      <p id="detail-desc" class="detail-desc">Deskripsi...</p>
+      <div class="loot-stats">
+        <span id="detail-tier" class="loot-tier-badge">TIER</span>
+        <span id="detail-points" class="loot-points-badge">0 Pts</span>
+      </div>
+      <button id="close-detail-btn" class="btn-primary" style="width: 100%; padding: 8px 14px; font-size: 10px;">TUTUP</button>
+    </div>
+  </div>
+
+  <!-- Secret Code Entry Modal -->
+  <div id="secret-code-modal" class="secret-code-modal hidden">
+    <div class="secret-code-content">
+      <h3 style="font-family: var(--font-pixel); font-size: 12px; color: var(--gold-bright); margin-bottom: 12px;">MASUKKAN KODE PETI</h3>
+      <input type="text" id="secret-code-input" placeholder="Cth: Q1, Q5..." style="width: 100%; text-align: center; font-weight: bold; margin-bottom: 14px;" />
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button id="secret-code-cancel" class="btn-logout" style="padding: 8px 14px; font-size: 10px;">BATAL</button>
+        <button id="secret-code-submit" class="btn-primary" style="padding: 8px 14px; font-size: 10px;">BUKA PETI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Finish Screen Overlay -->
+  <div id="finish-overlay" class="finish-overlay hidden">
+    <div class="finish-content">
+      <h1>SELAMAT!</h1>
+      <p style="font-size: 14px; margin-bottom: 12px;">Seluruh peti di peta telah kamu temukan!</p>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <h3>TOTAL SKOR</h3>
+          <p id="finish-score">0</p>
+        </div>
+        <div class="stat-box">
+          <h3>AKURASI</h3>
+          <p id="finish-accuracy">0%</p>
+        </div>
+        <div class="stat-box">
+          <h3>PETI TERBUKA</h3>
+          <p id="finish-questions">0 / 0</p>
+        </div>
+        <div class="stat-box">
+          <h3>GELAR</h3>
+          <p id="finish-rank">-</p>
+        </div>
+      </div>
+      <button id="finish-logout-btn" class="btn-primary" style="width: 100%; margin-top: 10px;">SELESAI & KELUAR</button>
+    </div>
+  </div>
+
+  <!-- Game Over (Time's Up) Overlay -->
+  <div id="game-over-overlay" class="game-over-overlay hidden">
+    <div class="finish-content" style="border-color: var(--red-crimson);">
+      <h1 style="color: var(--red-crimson);">WAKTU HABIS!</h1>
+      <p style="font-size: 14px; margin-bottom: 16px;">Sesi permainan telah berakhir. Terima kasih atas partisipasimu, Pemburu!</p>
+      <button id="game-over-logout-btn" class="btn-logout" style="width: 100%;">KELUAR</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TRADITIONAL LIGHTWEIGHT JAVASCRIPT ARCHITECTURE
+       1. assets-config.js: Asset registry, procedural SVG fallbacks, retro WebAudio synthesizer
+       2. core.js: Firebase config, global auth, and screen router
+       3. student.js: QR scanning, suspense sequence, questions, loot drops & inventory
+       4. teacher.js: Game timer, live leaderboard, rules editor, asset studio
+       ========================================================================= -->
+<script type="module" src="/src/main.js"></script>
+<script type="module" src="/src/assets-config.js"></script>
+<script type="module" src="/src/core.js"></script>
+<script type="module" src="/src/student.js"></script>
+<script type="module" src="/src/teacher.js"></script>
+
+</body>
+</html>
