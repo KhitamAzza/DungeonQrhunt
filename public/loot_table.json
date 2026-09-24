@@ -21,7 +21,7 @@
     { "item_id": "taspaknul", "name": "Tas pak nul.", "minPercent": 0, "image": "assets/items/taspaknul.png" }
   ],
   "mythic": [
-    { "item_id": "emasbatangan", "name": "Emas Batangan", "description": "Harganya tidak pernah turun dibandingan IDR", "minPercent": 0.75, "image": "assets/items/emasbatangan.png" },
+    { "item_id": "emasbatangan", "name": "Emas Batangan", "description": "Harganya tidak pernah turun dibandingan Rupiah", "minPercent": 0.75, "image": "assets/items/emasbatangan.png" },
     { "item_id": "buku_ala_ala", "name": "Buku ala-ala", "description": "saat buku ini tercipta 5 gunung meletus, dan hutan terbakar", "minPercent": 0.4, "image": "assets/items/Buku ala-ala.png" },
     { "item_id": "ijazah", "name": "Ijazah yang hilang", "description": "Sepertinya ini milik seseorang..", "minPercent": 0.15, "image": "assets/items/ijazah.png" },
     { "item_id": "malapangankerja", "name": "Map yang dijanjikan", "description": "bisa digunakan mencari 19 juta lapangan pekerjaan.", "minPercent": 0, "image": "assets/items/Malapangankerja.png" }

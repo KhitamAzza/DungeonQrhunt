@@ -42,6 +42,14 @@
     --font-display: 'Cinzel', serif;
     --font-reading: 'IM Fell English', Georgia, serif;
 }
+.icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.15em;
+    stroke: currentColor;
+    fill: none;
+}
 
 /* =============================================================================
    1. RESET & BASE ARCHITECTURE (Zero Overhead)

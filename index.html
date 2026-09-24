@@ -27,8 +27,12 @@
        ========================================================================= -->
   <section id="login-screen" class="screen active">
     <div class="login-container">
-      <div class="login-header-crest">🗝️</div>
-      <h1>BERBURU HARTA QRUN</h1>
+      <div class="login-header-crest">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="84" height="84" fill="currentColor">
+    <path d="M58.553 89 42.27 211.8H79V89H58.553zM97 89v122.8h38V89H97zm56 0v122.8h56.666v-17.6h92.668v17.6H359V89H153zm224 0v122.8h38V89h-38zm56 0v122.8h36.73L453.446 89H433zM227.666 212.2v105.2h56.668V212.2h-56.668zM256 223.794a18.667 16.103 0 0 1 18.666 16.1 18.667 16.103 0 0 1-9.666 14.09v37.214h-18V254a18.667 16.103 0 0 1-9.666-14.106 18.667 16.103 0 0 1 18.666-16.1zM41 229.8v127.915l19.334 18.23V229.8H41zm37.334 0v158h355.332v-158H302.334v105.6h-92.668V229.8H78.334zm373.332 0v146.145L471 357.715V229.8h-19.334zM41 382.456V423h43.002L41 382.455zm430 0L427.998 423H471v-40.545zM92 405.8l18.24 17.2h291.52L420 405.8H92z"/>
+  </svg>
+</div>
+<h1>BERBURU HARTA QRUN</h1>
       <p>Petualangan Menemukan Harta Karun & Mencari nilai</p>
       
       <div style="margin-bottom: 16px;">
@@ -62,16 +66,16 @@
       </div>
 
       <div class="header-actions">
-        <div id="student-timer" class="timer-badge">⏳ 00:00</div>
+        <div id="student-timer" class="timer-badge">00:00</div>
         <button id="logout-btn" class="btn-logout" title="Keluar">LOGOUT</button>
       </div>
     </header>
 
     <!-- Announcement Ticker Bar -->
     <div id="announcement-ticker" class="announcement-ticker hidden">
-      <span>📢</span>
+      <span><svg style="height: 24px; width: 24px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 0h512v512H0z" fill="#000" fill-opacity="1"></path><g class="" style="" transform="translate(0,0)"><path d="m443.535 120.186-112 64 8.93 15.628 112-64-8.93-15.628zM297 153v206h17.973V153H297zm-18 9.367L73 235.072v41.856l206 72.705V162.367zM39 240v32h18v-32H39zm297 7v18h128v-18H336zM99.332 300.89l-14.8 40.215L181.02 379.7l16.11-40.364-16.716-6.672-9.434 23.635-63.51-25.405 8.755-23.786-16.893-6.22zm241.133 11.296-8.93 15.628 112 64 8.93-15.628-112-64z" fill="currentColor" fill-opacity="1"></path></g></svg></span>
       <span id="announcement-text" class="ticker-text">Menunggu pengumuman...</span>
-      <button id="announcement-history-toggle" title="Riwayat Pengumuman">📜</button>
+      <button id="announcement-history-toggle" title="Riwayat Pengumuman"><svg style="height: 32px; width: 32px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 0h512v512H0z" fill="#000" fill-opacity="1"></path><g class="" style="" transform="translate(0,0)"><path d="M311.9 47.95c-17.6 0-34.6.7-50.7 2.43L244.6 93.5l-4.9-40.04c-2.5.46-5 .94-7.5 1.47-9.1 1.94-15.1 7.22-20.3 14.87-5.2 7.65-8.9 17.5-12.1 26.6C191 121.5 184 148 178.4 175c6 5.1 12 10.3 17.9 15.4l30.7-17.6 33.8 26.1 51.9-19.7 61 24.5-6.8 16.7-54.4-21.8-54.7 20.7-32.2-24.9-14.9 8.5c19.6 17.3 38.6 34.4 56.5 51.2l14-6.4 33.9 16.1 31.2-13.1 24.2 23.3-12.4 13-15.8-15.1-27.6 11.7-33-15.8c6.9 6.7 13.6 13.2 20.1 19.7l1.7 1.8 19.5 76.3-7.8-5.7-53 .4-38.1-17.8-42.4 14.6-5.8-17 49.2-17 41.1 19.2 24.7-.2-70.7-51.7c-19.7 4.6-39.4 2.8-58.1-3.7-4.2 44.4-5.9 85.7-7 118.7-.4 10.7 2.7 23 7.5 32.5 4.9 9.5 11.7 15.4 15 16.1 5.2 1.2 19 3.2 37.7 5.1l12.4-39 19.1 41.7c16.7 1.2 35 2 53.5 2.2 28.2.3 57.1-.9 82-4.7 15.8-2.3 29.6-6 40.7-10.4-11.8-5.1-21.6-10.6-29.1-16.6-11.1-8.9-18.2-19.3-17.3-30.9v.2c5.4-96.4 10.8-188.8 30.3-286l.1-.4.1-.4c5.3-17.9 17.9-39.86 36.1-55.83-13.9-2.06-28.6-4-43.7-5.66l-22.3 25.3-2.2-27.7c-19-1.64-38.4-2.71-57.4-2.92h-5.7zm148.5 20.44c-4.7 3.69-9.2 8.03-13.3 12.73 12.1 8.18 21.4 23.38 21.8 36.98.3 7.8-1.9 14.9-7.7 21.4-5.8 6.4-15.6 12.4-31.6 15.8l3.8 17.6c18.6-4 32.3-11.5 41.2-21.4 9-9.9 12.7-22.2 12.3-34-.6-19.3-11.1-37.59-26.5-49.11zM25.44 71.91c-.24 1.61-.38 3.43-.38 5.62.1 7.69 2.03 18.17 5.83 30.17 3.41 10.7 8.27 22.5 14.35 34.8 10.63-5.3 20.59-11 28.41-18.1-4.42 12.5-10.15 24.7-18.6 36.5 4.14 7.2 8.63 14.4 13.45 21.5 10.64-5.3 20.72-13 29.52-26.1-3.3 16-8.47 30.6-18.27 41.8 6.53 8.5 13.5 16.8 20.75 24.5 8.7-9.3 15.6-21 20.7-34.9 3.8 18.5 2.6 35.3-5.7 49.4 8 7.2 16.3 13.7 24.8 19.1 6.1-14 8.9-30.6 8.5-49.7 9.2 23.7 11.3 42.9 9.6 59.5 20.2 9.2 40.8 12 61.3 6.1l4.2-1.3 69.3 50.6-5.9-22.8c-73-72.8-175.4-156.7-261.86-226.69zM312.8 123.9l33.2 13.8 31.3-9.9 5.4 17.2-37.5 11.9-33.6-14-28.8 8.1-4.8-17.4zm107.3 236.2c-.7 0-1.3.1-2 .1-3.5.1-7.2.5-11.1 1.3l3.4 17.6c12.2-2.3 20-.4 24.5 2.5 4.4 2.9 6.3 6.8 6.4 12.5.1 9.3-7 23-23.3 32.5 5.4 2.9 11.9 5.9 19.3 8.7 14.4-11.6 22.1-26.8 22-41.4-.1-10.7-5.2-21.2-14.6-27.4-6.7-4.3-15-6.5-24.6-6.4z" fill="currentColor" fill-opacity="1"></path></g></svg></button>
       <div id="announcement-history-dropdown" class="hidden"></div>
     </div>
 
@@ -94,7 +98,8 @@
 
         <div class="student-action-row">
           <button id="secret-code-btn" class="btn-primary">KODE SAKTI</button>
-          <button id="open-inventory-btn" class="btn-primary" style="background-color: var(--wood-mid); color: var(--gold-bright); border: 2px solid var(--gold-mid);">🎒 TAS HARTA</button>
+          <button id="open-inventory-btn" class="btn-primary" style="background-color: var(--wood-mid); color: var(--gold-bright); border: 2px solid var(--gold-mid);">
+            <svg style="height: 24px; width: 24px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 0h512v512H0z"></path><g class="" style="" transform="translate(0,0)"><path d="M230.125 18.156V247h49.313V18.156h-49.313zM78.812 21.438l-16 136.906c48.707 30.112 97.637 47.843 148.625 53.094V33.125c-44.244-1.822-88.46-5.89-132.625-11.688zm349.438.28c-43.398 6.814-86.784 10.647-130.125 11.97v175c46.732-7.458 95.816-24.375 148.438-50.844L428.25 21.72zm-1.938 166.532c-44.474 19.847-87.06 32.836-128.187 38.97V247h37.031v143.188h-37.031v8.718c0 34.41-20.516 56.084-43.25 56.28-22.734.2-43.438-21.34-43.438-56.28v-8.72l-27.656.002h-9.343V247h37.001v-17.188c-43.774-4.164-86.14-16.857-127.687-38.062 5.04 92.69 3.66 185.37-5.063 278.063 117.402 32.047 234.788 31.002 352.188 0-6.853-93.858-9.223-187.706-4.563-281.563zm-233.187 77.438V371.5H316.47V265.687H193.124zm20.47 18.156H296v67.5h-82.406v-67.5zm18.686 18.687v30.126h45.032V302.53h-45.03zm-2.155 87.658v8.718c0 28.23 13.32 37.692 24.594 37.594 11.27-.098 24.718-10.018 24.718-37.594v-8.72l-49.313.002z" fill="currentColor" fill-opacity="1"></path></g></svg>TAS HARTA</button>
         </div>
       </div>
 
@@ -380,7 +385,7 @@
   <div id="inventory-modal" class="inventory-modal hidden">
     <div class="inventory-content" style="max-width: 440px;">
       <div class="inventory-header">
-        <h2>🎒 TAS HARTA SAYA</h2>
+        <h2>TAS HARTA SAYA</h2>
         <button id="close-inventory-btn" class="close-btn" aria-label="Tutup">✕</button>
       </div>
       

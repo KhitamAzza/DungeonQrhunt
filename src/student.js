@@ -59,14 +59,14 @@ function getTimeoutMultiplier(timeouts) {
 const CHEST_SUSPENSE_PHRASES = [
     "Berani buka kotak misteri ini?",
     "Tunggu sebentar... apakah ini jebakan bomb?",
-    "Buka saja, mungkin ada harta karun legendaris!",
+    "Jangan dibuka ini berisi jebakan!",
     "Siapa yang berani, dia yang menang!",
     "Coba tebak, apa isi di dalamnya?",
-    "Harta karun atau musibah menunggumu?",
-    "Pikirkan baik-baik sebelum membuka!",
+    "Ngomon-ngomon kamu sudah nyawit belum?",
+    "jika tidak tau, bertanyalah, tapi kebanyakan nanya malu-maluin",
     "Hati-hati, aura kotak ini sangat mistis!",
     "Ayo berdoa, semoga keberuntungan memihakmu!",
-    "Mungkin ini berisi relik kuno yang dicari!"
+    "Mungkin kotak ini berisi ijazah beliau!"
 ];
 
 // =============================================================================
@@ -81,7 +81,7 @@ async function checkGameStatusAndUpdateTimer() {
             const remaining = settings.endTime - now;
             if (remaining <= 0) {
                 isGameActive = false;
-                if (studentTimer) studentTimer.textContent = "⏳ 00:00";
+                if (studentTimer) studentTimer.textContent = "00:00";
             } else {
                 isGameActive = true;
                 const mins = Math.floor(remaining / 60000);
@@ -307,9 +307,9 @@ async function startChestSequence(qData, rarity) {
 
     // Trigger announcements for rare events
     if (isBomb) {
-        await triggerAnnouncement(`💥 ${currentUser ? currentUser.name : 'Pemburu'} Membuka kotak BOMB!`);
+        await triggerAnnouncement(`☠ ${currentUser ? currentUser.name : 'Pemburu'} Membuka kotak BOMB!`);
     } else if (rarity === 'mythic') {
-        await triggerAnnouncement(`💎 ${currentUser ? currentUser.name : 'Pemburu'} Menemukan harta Mythic!`);
+        await triggerAnnouncement(`★ ${currentUser ? currentUser.name : 'Pemburu'} Menemukan harta Mythic!`);
     }
 
     // Check for Bomb Trap: NO GLOW, chest opens, then bomb drops in from the top
