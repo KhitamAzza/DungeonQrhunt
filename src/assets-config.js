@@ -91,9 +91,9 @@ window.ASSET_CONFIG = {
     // file is only fetched the first time it actually plays, then cached.
     // _frame is 0-indexed and matches bomb_frames above — e.g. fuse at frame
     // 0 fires as soon as the frame sequence starts (right as the bomb lands).
-    bomb_fuse_sound: 'public/sfx/Fuse.mp3',
+    bomb_fuse_sound: 'sfx/Fuse.mp3',
     bomb_fuse_sound_frame: 0,
-    bomb_explosion_sound: 'public/sfx/Explosion.mp3',
+    bomb_explosion_sound: 'sfx/Explosion.mp3',
     bomb_explosion_sound_frame: 8,
 
     // 📸 SCREEN SHAKE — which frame (0-indexed) triggers the heavy rumble.
