@@ -539,8 +539,8 @@ section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-are
 }
 
 .chest-sprite {
-    width: 180px;
-    height: 180px;
+    width: 250px;
+    height: 250px;
     cursor: pointer;
     filter: drop-shadow(0 10px 0 rgba(0,0,0,0.7));
     transition: transform 0.15s ease;
@@ -698,8 +698,8 @@ section#student-dashboard:nth-of-type(2) > main:nth-of-type(1) > div#scanner-are
    6. BOMB TRAP & FULL SCREEN EFFECTS
    ============================================================================= */
 .bomb-sprite {
-    width: 180px;   /* 👈 CHANGE BOMB SIZE here (and height below, keep them matching) */
-    height: 180px;
+    width: 300px;   /* 👈 CHANGE BOMB SIZE here (and height below, keep them matching) */
+    height: 300px;
     filter: drop-shadow(0 8px 0 rgba(0,0,0,0.8));
     image-rendering: pixelated;
     transition: width 0.05s, height 0.05s; /* only affects the width/height jump if/when .bomb-sprite-fullscreen toggles on — NOT frame-to-frame speed, that's bomb_frame_ms in assets-config.js */
