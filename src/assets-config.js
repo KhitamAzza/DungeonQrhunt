@@ -113,29 +113,29 @@ window.ASSET_CONFIG = {
         // Common
         sandalswallow: 'assets/items/sandalswallow.png',
         snek: 'assets/items/snek.png',
-        es_teh_manis: 'assets/items/es_teh_manis.png',
+        es_teh_manis: 'assets/items/es teh manis.png',
 
         // Rare
         parfum: 'assets/items/parfum.png',
-        dasi: 'assets/items/dasi.png',
-        kunci: 'assets/items/kunci.png',
+        dasi: 'assets/items/Dasi.png',
+        kunci: 'assets/items/Kunci.png',
 
         // Epic
         router: 'assets/items/router.png',
         TWSkaumhave: 'assets/items/TWSkaumhave.png',
         chargerhp: 'assets/items/chargerhp.png',
-        micpenaikihsg: 'assets/items/micpenaikihsg.png',
+        micpenaikihsg: 'assets/items/MicpenaikIHSG.png',
 
         // Legendary
         kopyah: 'assets/items/kopyah.png',
-        hpkuat: 'assets/items/hpkuat.png',
-        kamerabunabila: 'assets/items/kamerabunabila.png',
+        hpkuat: 'assets/items/HPkuat.png',
+        kamerabunabila: 'assets/items/taspaknul.png',
 
         // Mythic
-        mahkota: 'assets/items/mahkota.png',
-        buku_ala_ala: 'assets/items/buku_ala_ala.png',
+        mahkota: 'assets/items/emasbatangan.png',
+        buku_ala_ala: 'assets/items/Buku ala-ala.png',
         ijazah: 'assets/items/ijazah.png',
-        malapangankerja: 'assets/items/malapangankerja.png'
+        malapangankerja: 'assets/items/Malapangankerja.png'
     },
 
     // Audio SFX Configuration
