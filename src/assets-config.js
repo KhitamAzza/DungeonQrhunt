@@ -22,9 +22,9 @@
 
 window.ASSET_CONFIG = {
     // Single Chest Sprites (Direct / Fallback)
-    chest_closed: 'assets/chest_closed.png',
-    chest_locked_glow: 'assets/chest_locked_glow.png',
-    chest_open: 'assets/chest_open.png',
+    chest_closed: 'assets/chest_open/chest_open_1.png',
+    chest_locked_glow: 'assets/chest_idle/chest_glow_1.png',
+    chest_open: 'assets/chest_open/chest_open_12.png',
 
     // 6-Frame Seamless Chest Idle / Glow Loop (When chest is awaiting player tap)
     chest_glow_frames: [
