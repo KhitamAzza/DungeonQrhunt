@@ -21,7 +21,18 @@
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-
+<!-- Loading Screen (covers app while assets preload) -->
+<div id="loading-screen" class="loading-screen" style="position: fixed; inset: 0; background-color: #120c08; z-index: 99999; display: flex; align-items: center; justify-content: center;">
+  <div class="loading-container">
+    <div class="loading-crest">🗝️</div>
+    <h1>BERBURU HARTA QRUN</h1>
+    <p class="loading-subtitle">Menyiapkan petualangan...</p>
+    <div class="loading-bar-wrapper">
+      <div id="loading-bar" class="loading-bar"></div>
+    </div>
+    <p id="loading-text" class="loading-text">Memuat aset... 0%</p>
+  </div>
+</div>
   <!-- =========================================================================
        SCREEN 1: LOGIN SCREEN
        ========================================================================= -->
@@ -469,10 +480,6 @@
        4. teacher.js: Game timer, live leaderboard, rules editor, asset studio
        ========================================================================= -->
 <script type="module" src="/src/main.js"></script>
-<script type="module" src="/src/assets-config.js"></script>
-<script type="module" src="/src/core.js"></script>
-<script type="module" src="/src/student.js"></script>
-<script type="module" src="/src/teacher.js"></script>
 
 </body>
 </html>
