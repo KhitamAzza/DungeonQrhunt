@@ -136,10 +136,28 @@ window.ASSET_CONFIG = {
         buku_ala_ala: 'assets/items/Buku ala-ala.png',
         ijazah: 'assets/items/ijazah.png',
         malapangankerja: 'assets/items/Malapangankerja.png'
+        
     },
-
+    // 🔊 CHOIR NOTES — one per tablet glyph (digit 1-9).
+    // Leave any entry null to skip playing a sound for that button.
+    choir_sounds: {
+        1: 'sfx/stonetablet/1.mp3',
+        2: 'sfx/stonetablet/2.mp3',
+        3: 'sfx/stonetablet/3.mp3',
+        4: 'sfx/stonetablet/4.mp3',
+        5: 'sfx/stonetablet/5.mp3',
+        6: 'sfx/stonetablet/6.mp3',
+        7: 'sfx/stonetablet/7.mp3',
+        8: 'sfx/stonetablet/8.mp3',
+        9: 'sfx/stonetablet/9.mp3'
+    },
+    choir_volume: 0.5,      // 0.0 to 1.0
+        // 🎉 Correct-code success sound (fires when the whole combination is right)
+    tablet_success_sound: 'sfx/stonetablet/correct.mp3',
+    tablet_success_volume: 0.7,
     // Audio SFX Configuration
     audioEnabled: true
+    
 };
 
 // =============================================================================
@@ -1259,7 +1277,8 @@ window.ASSET_CONFIG = {
 // =============================================================================
 window.RetroAudio = (function () {
     let ctx = null;
-    const customAudioCache = {}; // path -> Audio instance, so a repeat play (retries, next student) doesn't re-fetch the file
+    const customAudioCache = {};
+    const decodedAudioCache = {};   // path -> decoded AudioBuffer (for polyphonic playback)
 
     function getAudioContext() {
         if (!ctx && (window.AudioContext || window.webkitAudioContext)) {
@@ -1432,6 +1451,53 @@ window.RetroAudio = (function () {
                 return false;
             }
         },
+                // Plays a sound file polyphonically — every call creates its own
+        // BufferSourceNode, so pressing the same or different sounds in quick
+        // succession never cuts off the previous one. Buffers are decoded
+        // once and cached, so repeated plays are instant.
+        playChoirNote: async function (path, volume) {
+            if (!path || isMuted()) return;
+            try {
+                const c = getAudioContext();
+                if (!c) return;
+
+                let buffer = decodedAudioCache[path];
+                if (!buffer) {
+                    const res = await fetch(path);
+                    if (!res.ok) return;
+                    const arr = await res.arrayBuffer();
+                    buffer = await c.decodeAudioData(arr);
+                    decodedAudioCache[path] = buffer;
+                }
+
+                const source = c.createBufferSource();
+                source.buffer = buffer;
+                source.start(0);
+
+                const gain = c.createGain();
+                gain.gain.value = (typeof volume === 'number') ? volume : 0.5;
+
+                source.connect(gain);
+                gain.connect(c.destination);
+                source.start(0);
+            } catch (e) {
+                // silent fail
+            }
+        },
+
+        // Preload / decode a choir note without playing it (used by loading.js)
+        preloadChoirNote: async function (path) {
+            if (!path) return;
+            try {
+                const c = getAudioContext();
+                if (!c) return;
+                if (decodedAudioCache[path]) return;
+                const res = await fetch(path);
+                if (!res.ok) return;
+                const arr = await res.arrayBuffer();
+                decodedAudioCache[path] = await c.decodeAudioData(arr);
+            } catch (e) {}
+        },
 
         // Loot drop chime
         playLoot: function () {
@@ -1445,5 +1511,6 @@ window.RetroAudio = (function () {
         playTick: function () {
             playTone(900, 'triangle', 0.03, 0, 0.04);
         }
+        
     };
 })();

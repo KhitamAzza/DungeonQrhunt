@@ -30,11 +30,14 @@
         return [...urls];
     }
 
-    function collectAudioUrls() {
+       function collectAudioUrls() {
         const urls = [];
         const cfg = window.ASSET_CONFIG || {};
         if (cfg.bomb_fuse_sound)      urls.push(cfg.bomb_fuse_sound);
         if (cfg.bomb_explosion_sound) urls.push(cfg.bomb_explosion_sound);
+        if (cfg.choir_sounds) {
+            Object.values(cfg.choir_sounds).forEach(u => { if (u) urls.push(u); });
+        }
         return urls;
     }
 

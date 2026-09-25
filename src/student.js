@@ -1013,39 +1013,128 @@ async function fetchLatestAnnouncement() {
     } catch (error) {}
 }
 
+// // =============================================================================
+// 9. SECRET CODE MODAL — ANCIENT STONE TABLET
 // =============================================================================
-// 9. SECRET CODE MODAL
-// =============================================================================
-const secretCodeBtn = document.getElementById('secret-code-btn');
-const secretCodeModal = document.getElementById('secret-code-modal');
-const secretCodeInput = document.getElementById('secret-code-input');
-const secretCodeSubmit = document.getElementById('secret-code-submit');
-const secretCodeCancel = document.getElementById('secret-code-cancel');
+const TABLET_CODE_LENGTH = 4;   // change if question IDs need a different length
 
-if (secretCodeBtn) {
-    secretCodeBtn.addEventListener('click', () => {
-        secretCodeModal.classList.remove('hidden');
-        secretCodeInput.value = '';
-        secretCodeInput.focus();
-    });
+const secretCodeBtn    = document.getElementById('secret-code-btn');
+const secretCodeModal  = document.getElementById('secret-code-modal');
+const secretCodeCancel = document.getElementById('secret-code-cancel');
+const stoneTablet      = document.getElementById('stone-tablet');
+const tabletMessage    = document.getElementById('tablet-message');
+const glyphButtons     = document.querySelectorAll('.glyph-btn');
+const codeSlots        = document.querySelectorAll('.code-slot');
+
+let tabletCode = [];   // digits pressed so far
+let tabletLocked = false;   // true while submitting/error-shaking
+
+function resetTablet() {
+    tabletCode = [];
+    tabletLocked = false;
+    if (stoneTablet) stoneTablet.classList.remove('error', 'shake','success');
+    if (tabletMessage) tabletMessage.textContent = '';
+    glyphButtons.forEach(b => b.classList.remove('pressed'));
+    codeSlots.forEach(s => { s.classList.remove('filled'); s.innerHTML = ''; });
 }
-if (secretCodeCancel) {
-    secretCodeCancel.addEventListener('click', () => secretCodeModal.classList.add('hidden'));
+
+function openTablet() {
+    resetTablet();
+    if (secretCodeModal) secretCodeModal.classList.remove('hidden');
 }
-if (secretCodeSubmit) {
-    secretCodeSubmit.addEventListener('click', () => {
-        const qId = secretCodeInput.value.trim();
-        if (qId) {
-            secretCodeModal.classList.add('hidden');
-            loadQuestion(qId);
+
+function closeTablet() {
+    if (secretCodeModal) secretCodeModal.classList.add('hidden');
+    resetTablet();
+}
+
+function pressGlyph(btn) {
+    if (tabletLocked) return;
+    if (tabletCode.length >= TABLET_CODE_LENGTH) return;
+
+    const digit = btn.getAttribute('data-digit');
+        // Play that digit's choir note (polyphonic — won't stop previous notes)
+    const choirPath = window.ASSET_CONFIG && window.ASSET_CONFIG.choir_sounds
+        && window.ASSET_CONFIG.choir_sounds[digit];
+    if (choirPath && window.RetroAudio && window.RetroAudio.playChoirNote) {
+        const vol = window.ASSET_CONFIG.choir_volume || 0.5;
+        window.RetroAudio.playChoirNote(choirPath, vol);
+    }
+    tabletCode.push(digit);
+    btn.classList.add('pressed');
+
+    // Fill next slot with a clone of the button's icon
+    const slotIndex = tabletCode.length - 1;
+    const slot = codeSlots[slotIndex];
+    if (slot) {
+        slot.innerHTML = '';
+        const icon = btn.querySelector('svg');
+        if (icon) slot.appendChild(icon.cloneNode(true));
+        slot.classList.add('filled');
+    }
+
+    if (tabletCode.length === TABLET_CODE_LENGTH) {
+        tabletLocked = true;
+        // Small delay so the last button's glow is visible before submitting
+        setTimeout(() => submitTabletCode(tabletCode.join('')), 350);
+    }
+}
+
+async function submitTabletCode(code) {
+    try {
+        const res = await fetch(`${FIREBASE_URL}/questions/${code}.json?auth=${FIREBASE_SECRET}`);
+        const qData = await res.json();
+
+        if (!qData || !qData.text) {
+            showTabletError();
+            return;
         }
-    });
+
+        // ---- Correct! Play the success sequence ----
+        if (window.RetroAudio && window.ASSET_CONFIG) {
+            const path = window.ASSET_CONFIG.tablet_success_sound;
+            const vol = window.ASSET_CONFIG.tablet_success_volume || 0.7;
+            if (path && window.RetroAudio.playChoirNote) {
+                // Reuse the polyphonic player so it can overlap with any
+                // lingering choir notes from the last press
+                window.RetroAudio.playChoirNote(path, vol);
+            }
+        }
+
+        // Shine every button + slots gold
+        if (stoneTablet) stoneTablet.classList.add('success');
+        if (tabletMessage) tabletMessage.textContent = 'KODE BENAR!';
+
+        // Hold the glow for a beat, then hand off to the chest
+        setTimeout(() => {
+            closeTablet();
+            loadQuestion(code);
+        }, 900);
+
+    } catch (e) {
+        showTabletError();
+    }
 }
-if (secretCodeInput) {
-    secretCodeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && secretCodeSubmit) secretCodeSubmit.click();
-    });
+
+function showTabletError() {
+    if (!stoneTablet) return;
+    stoneTablet.classList.add('error', 'shake');
+    if (tabletMessage) tabletMessage.textContent = 'KODE SALAH!';
+    if (window.RetroAudio) window.RetroAudio.playWrong();
+
+    setTimeout(() => {
+        stoneTablet.classList.remove('shake');
+        // After the shake, keep the red glow briefly, then reset
+        setTimeout(() => resetTablet(), 500);
+    }, 500);
 }
+
+// Wire up buttons
+if (secretCodeBtn)    secretCodeBtn.addEventListener('click', openTablet);
+if (secretCodeCancel) secretCodeCancel.addEventListener('click', closeTablet);
+glyphButtons.forEach(btn => {
+    btn.addEventListener('click', () => pressGlyph(btn));
+});
 
 // =============================================================================
 // 10. LOOT DROP & INVENTORY SYSTEM
