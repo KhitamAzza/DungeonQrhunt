@@ -955,7 +955,11 @@ function showFinishScreen() {
         finishRank.textContent = rankText;
         finishRank.style.color = rankColor;
     }
-
+    // Render the collected loot into the finish screen (same style as inventory)
+    renderLootGrid(
+        document.getElementById('finish-inventory-grid'),
+        document.getElementById('finish-inventory-total-value')
+    );
     if (finishOverlay) finishOverlay.classList.remove('hidden');
     if (finishLogoutBtn) finishLogoutBtn.onclick = handleLogout;
 }
@@ -1230,14 +1234,15 @@ async function processLootDrop(timeRemaining, timeLimit, questionRarity, pointsE
     return itemId;
 }
 
-function renderInventoryGrid() {
-    const grid = document.getElementById('inventory-grid');
+// Renders the loot grid into any container. Used by both the inventory modal
+// and the finish screen so they look and behave identically.
+function renderLootGrid(grid, totalValueEl) {
     if (!grid) return;
     grid.innerHTML = '';
-    const items = currentUser.collectedItems || [];
+    const items = (currentUser && currentUser.collectedItems) || [];
 
     const totalValue = items.reduce((sum, entry) => sum + (entry.points || 0), 0);
-    if (inventoryTotalValueEl) inventoryTotalValueEl.textContent = totalValue;
+    if (totalValueEl) totalValueEl.textContent = totalValue;
 
     if (items.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; color: var(--gold-mid); font-family: var(--font-pixel); font-size: 10px; text-align: center; padding: 20px;">BELUM ADA HARTA KARUN!</p>';
@@ -1257,7 +1262,7 @@ function renderInventoryGrid() {
 
         const slot = document.createElement('div');
         slot.className = 'loot-slot';
-        
+
         const img = document.createElement('img');
         img.alt = item.name;
         if (window.bindPixelImage) {
@@ -1284,6 +1289,11 @@ function renderInventoryGrid() {
         });
         grid.appendChild(slot);
     }
+}
+
+// Existing call sites keep working:
+function renderInventoryGrid() {
+    renderLootGrid(document.getElementById('inventory-grid'), inventoryTotalValueEl);
 }
 
 if (openInventoryBtn) {
