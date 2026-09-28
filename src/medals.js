@@ -10,8 +10,8 @@
 window.MEDAL_DEFS = [
         {
         id: 'sniper',
-        name: 'Sniper Presisi',
-        desc: 'Setiap peti kamu jawab benar pada percobaan pertama!',
+        name: 'Si paling Suhu',
+        desc: 'Mendapatkan akurasi 100% tanpa ada jawaban salah!',
         sprite: 'assets/medals/sym_sniper.png',
         // 100% FIRST-TRY accuracy. Meaningful in both casual and strict
         // modes — you cannot earn this by retrying.
@@ -20,7 +20,7 @@ window.MEDAL_DEFS = [
     },
     {
         id: 'speed',
-        name: 'Kilat Cepat',
+        name: 'Paling Sat-set',
         desc: 'Rata-rata jawaban di bawah 8 detik!',
         sprite: 'assets/medals/sym_speed.png',
         check: (u) => {
@@ -43,14 +43,14 @@ window.MEDAL_DEFS = [
     },
     {
         id: 'streak',
-        name: 'Streak Panas',
+        name: '5-Streak',
         desc: '5 jawaban benar berturut-turut!',
         sprite: 'assets/medals/sym_streak.png',
         check: (u) => (u.longestStreak || 0) >= 5
     },
     {
         id: 'scholar',
-        name: 'Cendekiawan',
+        name: 'Si paling rajin',
         desc: 'Membuka 10 peti atau lebih!',
         sprite: 'assets/medals/sym_scholar.png',
         check: (u) => (u.answeredQuestions ? u.answeredQuestions.size : 0) >= 10
