@@ -305,11 +305,10 @@ async function startChestSequence(qData, rarity) {
     await sleep(400);
     chestSprite.classList.remove('chest-shake-css');
 
-    // Trigger announcements for rare events
+        // Bomb traps announce when triggered — there's no question to answer,
+    // so opening IS the event.
     if (isBomb) {
-        await triggerAnnouncement(`☠ ${currentUser ? currentUser.name : 'Pemburu'} Membuka kotak BOMB!`);
-    } else if (rarity === 'mythic') {
-        await triggerAnnouncement(`★ ${currentUser ? currentUser.name : 'Pemburu'} Menemukan harta Mythic!`);
+        await triggerAnnouncement(`☠ ${currentUser ? currentUser.name : 'Pemburu'} Terkena jebakan bom!`);
     }
 
     // Check for Bomb Trap: NO GLOW, chest opens, then bomb drops in from the top
@@ -407,6 +406,7 @@ function renderParchmentOptions(qData) {
 
 function startParchmentTimer(rarity) {
     const timeLimit = GAME_CONFIG.timeLimits[rarity] || 30000;
+    const timeouts = currentUser.questionTimeouts[currentQuestionId] || 0;
     runTimer(timeLimit, '.parchment-timer-bar', '.parchment-timer-text', () => handleTimeUp('parchment'));
 }
 
@@ -447,12 +447,21 @@ function runTimer(timeLimit, barSelector, textSelector, onTimeUpCallback) {
 
 function handleTimeUp(source) {
     clearInterval(questionTimerInterval);
-    if (currentQuestionId) {
+    if (currentQuestionId && currentUser) {
+        // 🆕 First-try tracking: a timeout counts as a first-try failure
+        // if this is the student's first encounter with this chest.
+        if (!currentUser.questionAttempted.has(currentQuestionId)) {
+            currentUser.questionAttempted.add(currentQuestionId);
+            currentUser.firstTryAttempts++;
+            currentUser.questionFirstTryFailed.add(currentQuestionId);
+        }
+
         if (!currentUser.questionTimeouts[currentQuestionId]) {
             currentUser.questionTimeouts[currentQuestionId] = 0;
         }
         currentUser.questionTimeouts[currentQuestionId]++;
     }
+    
 
     if (source === 'parchment') {
         const rpgQText = document.getElementById('parchment-q-text');
@@ -495,19 +504,45 @@ async function submitAnswer(selectedOption) {
 
     const isCorrect = qData && (selectedOption === qData.correct_answer);
     const rarity = qData && qData.rarity ? qData.rarity.toLowerCase().trim() : 'common';
-    const basePoints = GAME_CONFIG.rarityPoints[rarity] || 10;
+    const basePoints = (GAME_CONFIG.rarityPoints && GAME_CONFIG.rarityPoints[rarity]) || 10;
 
-    const timerTextEl = document.querySelector('.parchment-timer-text');
+        const timerTextEl = document.querySelector('.parchment-timer-text');
     let timeRemaining = 0;
     if (timerTextEl) {
         const secsLeft = parseInt(timerTextEl.textContent.replace('s', ''));
         timeRemaining = (secsLeft || 0) * 1000;
     }
     const timeLimit = GAME_CONFIG.timeLimits[rarity] || 30000;
-    const timeouts = currentUser.questionTimeouts[currentQuestionId] || 0;
+     const timeouts = currentUser.questionTimeouts[currentQuestionId] || 0;
+    // 🆕 First-try detection — is this the student's first encounter with this chest?
+    const isFirstAttempt = !currentUser.questionAttempted.has(currentQuestionId);
+    if (isFirstAttempt) {
+        currentUser.questionAttempted.add(currentQuestionId);
+        currentUser.firstTryAttempts++;
+        if (isCorrect) {
+            currentUser.firstTryCorrect++;
+        } else {
+            currentUser.questionFirstTryFailed.add(currentQuestionId);
+        }
+    }
+
+        // 🎯 Mode-aware scoring:
+    // - First-try correct → always full points (both modes)
+    // - Retry correct → reduced points (casual) or 0 points (strict)
+    // - Wrong → 0 points (both modes)
+        const mode = GAME_CONFIG.gameMode || 'casual';
     const speedMultiplier = getSpeedMultiplier(timeRemaining, timeLimit);
-    const timeoutMultiplier = getTimeoutMultiplier(timeouts);
-    const pointsEarned = isCorrect ? Math.round(basePoints * speedMultiplier * timeoutMultiplier) : 0;
+    let pointsEarned = 0;
+    if (isCorrect) {
+        if (isFirstAttempt) {
+            pointsEarned = Math.round(basePoints * speedMultiplier);
+        } else if (mode === 'casual') {
+            const timeoutMultiplier = getTimeoutMultiplier(timeouts);
+            pointsEarned = Math.round(basePoints * speedMultiplier * timeoutMultiplier);
+        }
+        // 'latihan' mode → retry correct still gives 0 points
+        // 'penilaian' mode → retries never reach here (chest locked)
+    }
 
     const submissionData = {
         student_password: currentUser.password,
@@ -533,33 +568,64 @@ async function submitAnswer(selectedOption) {
         // answer, or immediately if redemption is off. When it's on and the
         // answer is wrong, the lock is decided further down instead, once we
         // know whether this was the 1st/2nd/3rd attempt.
-        const redemptionEnabled = GAME_CONFIG.redemptionEnabled !== false;
-        if (isCorrect || !redemptionEnabled) {
+                const mode = GAME_CONFIG.gameMode || 'casual';
+
+        // Lock the chest when:
+        // - answer is correct (any mode), OR
+        // - mode is penilaian (wrong = immediate lock), OR
+        // - in casual mode, retries are exhausted (3 strikes)
+        // Latihan mode never locks.
+        if (isCorrect) {
+            currentUser.answeredQuestions.add(currentQuestionId);
+        } else if (mode === 'penilaian') {
             currentUser.answeredQuestions.add(currentQuestionId);
         }
         currentUser.globalQuestionUses[currentQuestionId] = (currentUser.globalQuestionUses[currentQuestionId] || 0) + 1;
 
         if (isCorrect) {
-            currentUser.correctCount++;
-            currentUser.rawScore += pointsEarned;
-            if (currentUser.answeredRarities[rarity] !== undefined) {
-                currentUser.answeredRarities[rarity]++;
-            }
-        }
+    currentUser.correctCount++;
+    currentUser.rawScore += pointsEarned;
+        if (currentUser.answeredRarities && currentUser.answeredRarities[rarity] !== undefined) {
+        currentUser.answeredRarities[rarity]++;
+    }
+
+    // --- Achievement tracking ---
+    currentUser.correctStreak = (currentUser.correctStreak || 0) + 1;
+    if (currentUser.correctStreak > (currentUser.longestStreak || 0)) {
+        currentUser.longestStreak = currentUser.correctStreak;
+    }
+    currentUser.correctAttempts = (currentUser.correctAttempts || 0) + 1;
+    currentUser.totalAnswerTimeMs = (currentUser.totalAnswerTimeMs || 0) + (timeLimit - timeRemaining);
+} else {
+    // Wrong answer breaks the streak
+    currentUser.correctStreak = 0;
+}
 
         updateProgressTracker();
 
         if (checkPersonalFinishCondition()) return;
 
-        if (isCorrect) {
+            if (isCorrect) {
             if (rpgQText) {
-                rpgQText.textContent = "BENAR! 🏆";
+                rpgQText.textContent = pointsEarned > 0 ? "BENAR! 🏆" : "BENAR (TANPA POIN)";
                 rpgQText.style.color = "var(--green-emerald)";
             }
             if (window.RetroAudio) window.RetroAudio.playCorrect();
+            // Mythic announcement now fires on the correct answer, not on open.
+            if (rarity === 'mythic') {
+                await triggerAnnouncement(`★ ${currentUser.name} Menemukan harta Mythic!`);
+            }            
 
-            await sleep(700);
-            await processLootDrop(timeRemaining, timeLimit, rarity, pointsEarned);
+                        if (pointsEarned > 0) {
+                // Any correct answer that earned points → loot drops
+                // (first-try always, casual retries too)
+                await sleep(700);
+                await processLootDrop(timeRemaining, timeLimit, rarity, pointsEarned);
+            } else {
+                // Strict-mode retry → no loot, back to scanner
+                await sleep(1400);
+                resetToScanner();
+            }
         } else {
             // 🔁 REDEMPTION — wrong answer. Reuses the SAME counter (and by
             // extension the SAME GAME_CONFIG.timeoutMultipliers tiers, via
@@ -567,15 +633,21 @@ async function submitAnswer(selectedOption) {
             // a timeout on the same chest count toward the same 3-strike cap:
             // 1st miss = 0.7x reward next time, 2nd = 0.5x, 3rd = locked for
             // good (answeredQuestions.add below) with 0 reward from then on.
-            if (redemptionEnabled) {
+            if (mode === 'casual') {
                 if (!currentUser.questionTimeouts[currentQuestionId]) {
                     currentUser.questionTimeouts[currentQuestionId] = 0;
                 }
                 currentUser.questionTimeouts[currentQuestionId]++;
                 if (currentUser.questionTimeouts[currentQuestionId] >= 3) {
-                    currentUser.answeredQuestions.add(currentQuestionId); // attempts exhausted — lock for good
+                    currentUser.answeredQuestions.add(currentQuestionId);
+                    // The chest just got locked — refresh the tracker and check
+                    // if this was the student's last remaining chest.
+                    updateProgressTracker();
+                    if (checkPersonalFinishCondition()) return;
                 }
             }
+            // 'penilaian' already locked above
+            // 'latihan' never locks — unlimited retries
 
             if (rpgQText) {
                 rpgQText.textContent = "SALAH! ❌";
@@ -622,9 +694,13 @@ function updateProgressTracker() {
     // Counts ONLY chests THIS student personally opened. A chest someone else
     // used up doesn't count as "found" here — see checkPersonalFinishCondition
     // below for why.
-    let resolvedChests = 0;
+        let resolvedChests = 0;
     for (const qId of Object.keys(currentUser.questionMaxUses)) {
-        if (currentUser.answeredQuestions.has(qId)) resolvedChests++;
+        const openedByMe = currentUser.answeredQuestions.has(qId);
+        const maxUses = currentUser.questionMaxUses[qId] || 99;
+        const globalUses = (currentUser.globalQuestionUses && currentUser.globalQuestionUses[qId]) || 0;
+        const claimedGlobally = globalUses >= maxUses;
+        if (openedByMe || claimedGlobally) resolvedChests++;
     }
 
     const total = currentUser.totalQuestions;
@@ -645,19 +721,13 @@ function updateProgressTracker() {
 function checkPersonalFinishCondition() {
     if (!currentUser || !currentUser.questionMaxUses) return false;
 
-    // 🐛 FIX: this used to also count a chest as "resolved" the moment its
-    // max_uses cap was hit by ANY student (claimedGlobally), not just this one.
-    // That meant the instant one student found every chest, every OTHER
-    // student's count also jumped to total on their next check — silently
-    // finishing the game for them even though they'd personally opened
-    // nothing. A chest someone else claimed is still handled — the student
-    // just sees the "locked" overlay if they scan that specific one — but it
-    // no longer counts toward THIS student finishing the whole game. They now
-    // keep playing normally until they've personally opened every chest they
-    // still can, or the game timer runs out.
     let resolvedChests = 0;
     for (const qId of Object.keys(currentUser.questionMaxUses)) {
-        if (currentUser.answeredQuestions.has(qId)) resolvedChests++;
+        const openedByMe = currentUser.answeredQuestions.has(qId);
+        const maxUses = currentUser.questionMaxUses[qId] || 99;
+        const globalUses = (currentUser.globalQuestionUses && currentUser.globalQuestionUses[qId]) || 0;
+        const claimedGlobally = globalUses >= maxUses;
+        if (openedByMe || claimedGlobally) resolvedChests++;
     }
 
     if (resolvedChests >= currentUser.totalQuestions && currentUser.totalQuestions > 0) {
@@ -804,7 +874,8 @@ setTimeout(() => document.body.classList.remove('screen-shake'), 300);
     if (bombMessage) bombMessage.classList.remove('hidden');
 
     if (currentUser) {
-        await submitBombPenalty();
+    currentUser.hitBomb = true;
+    await submitBombPenalty();
         currentUser.answeredQuestions.add(currentQuestionId);
         currentUser.globalQuestionUses[currentQuestionId] = (currentUser.globalQuestionUses[currentQuestionId] || 0) + 1;
         updateProgressTracker();
@@ -915,7 +986,7 @@ if (lockedBackBtn) {
 // =============================================================================
 // 8. FINISH SCREEN & ANNOUNCEMENTS
 // =============================================================================
-function showFinishScreen() {
+function showFinishSummary() {
     const finishOverlay = document.getElementById('finish-overlay');
     const finishScore = document.getElementById('finish-score');
     const finishAccuracy = document.getElementById('finish-accuracy');
@@ -962,6 +1033,28 @@ function showFinishScreen() {
     );
     if (finishOverlay) finishOverlay.classList.remove('hidden');
     if (finishLogoutBtn) finishLogoutBtn.onclick = handleLogout;
+}
+async function showFinishScreen() {
+    // Hide any gameplay overlays that are still showing
+    const parchmentOverlay = document.getElementById('parchment-overlay');
+    const chestOverlay = document.getElementById('chest-overlay');
+    const scrollOverlay = document.getElementById('scroll-overlay');
+    if (parchmentOverlay) parchmentOverlay.classList.add('hidden');
+    if (chestOverlay) chestOverlay.classList.add('hidden');
+    if (scrollOverlay) scrollOverlay.classList.add('hidden');
+
+    // Run the medal ceremony. It resolves when the player taps through
+    // all medals or hits SKIP.
+    if (typeof window.runMedalCeremony === 'function') {
+        try {
+            await window.runMedalCeremony();
+        } catch (e) {
+            console.warn('Ceremony failed, showing summary directly:', e);
+        }
+    }
+
+    // Now show the actual summary
+    showFinishSummary();
 }
 
 async function triggerAnnouncement(message) {

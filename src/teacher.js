@@ -334,13 +334,21 @@ function populateConfigForm() {
     getEl('cfg-timeout-2').value = GAME_CONFIG.timeoutMultipliers[2];
 
     getEl('cfg-bomb-penalty').value = GAME_CONFIG.bombPenalty;
-        // 🔁 NEW: populate redemption toggle
+    const modeEl = getEl('cfg-game-mode');
+    if (modeEl) modeEl.value = GAME_CONFIG.gameMode || 'casual';
+
+    // 🔁 Redemption toggle
     const redemptionCheckbox = getEl('cfg-redemption-enabled');
     if (redemptionCheckbox) {
         redemptionCheckbox.checked = GAME_CONFIG.redemptionEnabled !== false;
     }
-}
 
+    // 🎯 Strict scoring toggle
+    const strictCheckbox = getEl('cfg-strict-scoring');
+    if (strictCheckbox) {
+        strictCheckbox.checked = GAME_CONFIG.strictScoring === true;
+    }
+}
 function createSpeedThresholdRow(minPercent, multiplier) {
     const row = document.createElement('div');
     row.className = 'speed-threshold-row';
@@ -430,7 +438,7 @@ if (saveConfigBtn) {
             return;
         }
 
-        const newConfig = {
+   const newConfig = {
     rarityPoints: {
         common: Number(getEl('cfg-points-common').value) || 10,
         rare: Number(getEl('cfg-points-rare').value) || 25,
@@ -452,9 +460,7 @@ if (saveConfigBtn) {
         2: Number(getEl('cfg-timeout-2').value)
     },
     bombPenalty: Number(getEl('cfg-bomb-penalty').value) || 30,
-
-    // 🔁 NEW: preserve redemption setting
-    redemptionEnabled: !!(getEl('cfg-redemption-enabled') && getEl('cfg-redemption-enabled').checked)
+    gameMode: getEl('cfg-game-mode')?.value || 'casual'
 };
 
         saveConfigBtn.textContent = "MENYIMPAN...";

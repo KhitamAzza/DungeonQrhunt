@@ -229,25 +229,21 @@
           <div id="speed-thresholds-list" style="margin-bottom: 10px;"></div>
           <button id="add-speed-threshold-btn" type="button" class="btn-primary" style="padding: 6px 10px; font-size: 9px; margin-bottom: 16px;">+ TAMBAH TIER</button>
 
-        <!-- 🔁 NEW: Redemption Toggle -->
-        <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">4. SISTEM REDEMPTION (JAWABAN SALAH)</h3>
-        <div style="margin-bottom: 18px;">
-        <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-        <input
-         type="checkbox"
-          id="cfg-redemption-enabled"
-          style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--gold-mid);"
-          >
-          Aktifkan Redemption (boleh coba lagi jika jawaban salah)
-      </label>
-      <p style="font-size: 12px; opacity: 0.7; margin-top: 6px; margin-left: 26px; line-height: 1.4;">
-       ✅ <strong>Aktif:</strong> Jawaban salah = percobaan ulang dengan multiplier bertingkat
-       (1× salah → 0.7x poin, 2× salah → 0.5x poin, 3× salah → peti terkunci).<br>
-        ❌ <strong>Nonaktif:</strong> Jawaban salah langsung mengunci peti (perilaku lama).
-      </p>
-      </div>
-
-          <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">5. MULTIPLIER RETRY / TIMEOUT</h3>
+        <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">4. MODE PERMAINAN</h3>
+<div style="margin-bottom: 18px;">
+  <label style="font-size: 13px; display: block; margin-bottom: 8px;">Pilih Mode:</label>
+  <select id="cfg-game-mode" style="width: 100%; max-width: 320px; background: #120b06; color: var(--text-light); border: 2px solid var(--card-border); padding: 10px 14px; font-size: 14px; font-family: var(--font-reading);">
+    <option value="penilaian">Penilaian — salah = peti terkunci (tanpa retry)</option>
+    <option value="casual">Casual — retry boleh, poin berkurang</option>
+    <option value="latihan">Latihan soal — retry bebas, tanpa poin</option>
+  </select>
+  <p style="font-size: 12px; opacity: 0.7; margin-top: 8px; line-height: 1.5;">
+    🎯 <strong>Penilaian:</strong> jawaban salah langsung mengunci peti. Cocok untuk ulangan resmi.<br>
+    🎲 <strong>Casual:</strong> jawaban salah boleh dicoba lagi dengan poin bertingkat (0.7x → 0.5x).<br>
+    📚 <strong>Latihan soal:</strong> retry tanpa batas, tanpa poin. Siswa bisa belajar tanpa tekanan.
+  </p>
+</div>
+  <h3 style="font-family: var(--font-pixel); font-size: 10px; color: var(--gold-bright); margin: 14px 0 8px;">5. MULTIPLIER RETRY / TIMEOUT</h3>
           <div class="config-grid">
             <label>Timeout 0: <input type="number" id="cfg-timeout-0" step="0.1" min="0"></label>
             <label>Timeout 1: <input type="number" id="cfg-timeout-1" step="0.1" min="0"></label>
@@ -523,7 +519,29 @@
       <button id="game-over-logout-btn" class="btn-logout" style="width: 100%;">KELUAR</button>
     </div>
   </div>
+<!-- =========================================================================
+     MEDAL CEREMONY — shown after finishing all chests
+     ========================================================================= -->
+<div id="medal-ceremony" class="medal-ceremony hidden">
 
+  <!-- Skip button (top-right, always visible) -->
+  <button id="medal-skip-btn" class="medal-skip-btn">LEWATI ⏭</button>
+
+  <!-- The medal display area (tapped to advance) -->
+  <div id="medal-stage" class="medal-stage">
+
+    <div id="medal-sprite-wrap" class="medal-sprite-wrap">
+      <img id="medal-sprite" class="medal-sprite" alt="Medal" />
+    </div>
+
+    <h2 id="medal-name" class="medal-name"></h2>
+    <p id="medal-desc" class="medal-desc"></p>
+
+    <p id="medal-progress" class="medal-progress"></p>
+    <p id="medal-tap-hint" class="medal-tap-hint">TAP UNTUK LANJUT ▸</p>
+  </div>
+
+</div>
   <!-- =========================================================================
        TRADITIONAL LIGHTWEIGHT JAVASCRIPT ARCHITECTURE
        1. assets-config.js: Asset registry, procedural SVG fallbacks, retro WebAudio synthesizer

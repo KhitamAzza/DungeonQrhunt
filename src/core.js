@@ -24,7 +24,7 @@ window.GAME_CONFIG = {
     // 3rd = locked for good with 0 reward — identical to the existing
     // timeout rule. Set to false to restore the old behavior (any wrong
     // answer locks the chest immediately, no retry).
-    redemptionEnabled: true
+    gameMode: 'casual'
 };
 
 const DEFAULT_LOOT_TABLE = {
@@ -119,9 +119,13 @@ async function fetchGameConfig() {
                     : GAME_CONFIG.speedThresholds,
                 timeoutMultipliers: { ...GAME_CONFIG.timeoutMultipliers, ...(remote.timeoutMultipliers || {}) },
                 bombPenalty: (typeof remote.bombPenalty === 'number') ? remote.bombPenalty : GAME_CONFIG.bombPenalty,
-                redemptionEnabled: (typeof remote.redemptionEnabled === 'boolean') ? remote.redemptionEnabled : GAME_CONFIG.redemptionEnabled
+                gameMode: (typeof remote.gameMode === 'string' && ['penilaian','casual','latihan'].includes(remote.gameMode))
+                ? remote.gameMode
+                : GAME_CONFIG.gameMode
             };
+            
         }
+        
     } catch (e) {
         console.warn("Using built-in default config.", e);
     }
@@ -302,14 +306,49 @@ loginBtn.addEventListener('click', async () => {
         const studentData = await response.json();
 
         if (studentData && studentData.name) {
-            currentUser = {
-                password,
-                name: studentData.name,
-                class: studentData.class,
-                answeredQuestions: new Set(),
-                collectedItems: [],
-                questionTimeouts: {}
-            };
+        currentUser = {
+    password,
+    name: studentData.name,
+    class: studentData.class,
+    answeredQuestions: new Set(),
+    collectedItems: [],
+    questionTimeouts: {},
+
+    // --- Achievement tracking (used by medals.js) ---
+    correctStreak: 0,
+    longestStreak: 0,
+    totalAnswerTimeMs: 0,
+    correctAttempts: 0,
+    hitBomb: false,
+
+    // --- First-try scoring (used by submitAnswer, handleTimeUp, medals) ---
+    questionAttempted: new Set(),     // chests this student has tried at least once
+    questionFirstTryFailed: new Set(), // chests where the FIRST attempt was wrong/timeout
+    firstTryCorrect: 0,               // count of chests correct on the 1st attempt
+    firstTryAttempts: 0               // count of chests attempted for the 1st time
+};
+            // Fetch question list to build max_uses map + total real question count.
+            // "Real" chests exclude bomb traps and hint chests (matches teacher.js
+            // leaderboard logic) since those aren't things a student "completes".
+                        let qData = null;
+            try {
+                const qRes = await fetch(`${FIREBASE_URL}/questions.json?auth=${FIREBASE_SECRET}`);
+                qData = await qRes.json();   // ← assign, not declare
+                currentUser.questionMaxUses = {};
+                let total = 0;
+                if (qData) {
+                    for (const [qId, q] of Object.entries(qData)) {
+                        if (q && (q.chest_type === 'bomb' || q.chest_type === 'hint')) continue;
+                        currentUser.questionMaxUses[qId] = q.max_uses || 99;
+                        total++;
+                    }
+                }
+                currentUser.totalQuestions = total;
+            } catch (e) {
+                console.warn("Failed to load question list", e);
+                currentUser.questionMaxUses = {};
+                currentUser.totalQuestions = 0;
+            }
 
             // Reload previously collected loot for this student
             try {
@@ -325,70 +364,88 @@ loginBtn.addEventListener('click', async () => {
             }
 
             // Fetch past submissions
+                        // Fetch past submissions
             const subsRes = await fetch(`${FIREBASE_URL}/submissions.json?auth=${FIREBASE_SECRET}`);
             const allSubs = await subsRes.json();
             currentUser.globalQuestionUses = {};
 
+            // Single pass: reconstruct per-student state AND global claim counts
+            const byQuestion = {};   // qId -> earliest submission by THIS student
+
             if (allSubs) {
                 Object.values(allSubs).forEach(sub => {
+                    // --- Per-student state ---
                     if (sub.student_password === currentUser.password) {
-    if (sub.is_correct === true) {
-        currentUser.answeredQuestions.add(sub.question_id);
-    }
-}
-                    const qId = sub.question_id;
-                    currentUser.globalQuestionUses[qId] = (currentUser.globalQuestionUses[qId] || 0) + 1;
+                        if (sub.is_correct === true) {
+                            currentUser.answeredQuestions.add(sub.question_id);
+                        }
+                        // Track earliest submission per question, for first-try reconstruction
+                        const qId = sub.question_id;
+                        if (!byQuestion[qId] || sub.timestamp < byQuestion[qId].timestamp) {
+                            byQuestion[qId] = sub;
+                        }
+                    }
+                    // --- Global max_uses cap ---
+                    // Only correct, non-bomb submissions consume the chest.
+                    if (sub.is_correct === true && !sub.is_bomb) {
+                        const qId = sub.question_id;
+                        currentUser.globalQuestionUses[qId] = (currentUser.globalQuestionUses[qId] || 0) + 1;
+                    }
                 });
             }
 
-            // Fetch Questions & Calculate Objectives
-            const questionsRes = await fetch(`${FIREBASE_URL}/questions.json?auth=${FIREBASE_SECRET}`);
-            const allQuestions = await questionsRes.json();
-
-            currentUser.totalQuestions = 0;
-            currentUser.questionMaxUses = {};
+            // Reconstruct first-try tracking from this student's earliest attempts
+            for (const qId in byQuestion) {
+                const sub = byQuestion[qId];
+                if (sub.is_bomb) continue;                     // bombs don't count
+                if (sub.question_id === 'BOMB_TRAP') continue; // legacy
+                currentUser.questionAttempted.add(qId);
+                currentUser.firstTryAttempts++;
+                if (sub.is_correct === true) {
+                    currentUser.firstTryCorrect++;
+                } else {
+                    currentUser.questionFirstTryFailed.add(qId);
+                }
+            }
+                        // --- Initialize stats fields for the finish screen ---
+            currentUser.correctCount = 0;
+            currentUser.rawScore = 0;
+            currentUser.answeredRarities = { common: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 };
             currentUser.maxPossibleScore = 0;
 
-            if (allQuestions) {
-                for (const [qId, q] of Object.entries(allQuestions)) {
+            // Max possible score — sum of rarity points for all real chests
+            if (qData) {
+                for (const [qId, q] of Object.entries(qData)) {
                     const chestType = q.chest_type ? q.chest_type.toLowerCase().trim() : 'reward';
                     if (chestType === 'hint' || chestType === 'bomb') continue;
-
-                    currentUser.totalQuestions++;
-                    currentUser.questionMaxUses[qId] = q.max_uses || 99;
                     const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
                     currentUser.maxPossibleScore += (GAME_CONFIG.rarityPoints[rarity] || 10);
                 }
             }
             if (currentUser.maxPossibleScore === 0) currentUser.maxPossibleScore = 1;
 
-            // Calculate Local Stats for Finish Screen
-            currentUser.correctCount = 0;
-            currentUser.rawScore = 0;
-            currentUser.answeredRarities = { common: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 };
-
-            if (allQuestions && allSubs) {
+            // Rebuild correctCount / rawScore / answeredRarities from past submissions
+            if (qData && allSubs) {
                 Object.values(allSubs).forEach(sub => {
-                    if (sub.student_password === currentUser.password) {
-                        const qId = sub.question_id;
-                        const q = allQuestions[qId];
-                        if (q) {
-                            const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
-                            if (currentUser.answeredRarities[rarity] !== undefined) {
-                                currentUser.answeredRarities[rarity]++;
-                            }
-                            const chestType = q.chest_type ? q.chest_type.toLowerCase().trim() : 'reward';
-                            if (chestType !== 'bomb' && sub.selected_answer === q.correct_answer) {
-                                currentUser.correctCount++;
-                                currentUser.rawScore += (typeof sub.points_earned === 'number'
-                                    ? sub.points_earned
-                                    : (GAME_CONFIG.rarityPoints[rarity] || 10));
-                            }
+                    if (sub.student_password !== currentUser.password) return;
+                    if (sub.is_bomb) return;
+                    const q = qData[sub.question_id];
+                    if (!q) return;
+
+                                        const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
+                    const chestType = q.chest_type ? q.chest_type.toLowerCase().trim() : 'reward';
+                    const isCorrectSub = chestType !== 'bomb' && sub.selected_answer === q.correct_answer;
+                    if (isCorrectSub) {
+                        if (currentUser.answeredRarities[rarity] !== undefined) {
+                            currentUser.answeredRarities[rarity]++;
                         }
+                        currentUser.correctCount++;
+                        currentUser.rawScore += (typeof sub.points_earned === 'number'
+                            ? sub.points_earned
+                            : (GAME_CONFIG.rarityPoints[rarity] || 10));
                     }
                 });
             }
-
             // Check if already finished — counts ONLY chests THIS student personally
             // opened (answeredQuestions). Chests other students used up their max_uses
             // on are handled separately by the "locked" overlay when this student

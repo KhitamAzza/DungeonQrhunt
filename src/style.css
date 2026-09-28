@@ -1554,3 +1554,150 @@ section#teacher-dashboard:nth-of-type(3) > main:nth-of-type(1) > div#tab-leaderb
     color: var(--gold-bright);
     text-shadow: 0 0 12px var(--gold-bright);
 }
+/* =============================================================================
+   14. MEDAL CEREMONY (post-game achievement reveal)
+   ============================================================================= */
+.medal-ceremony {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 50% 30%, rgba(217, 154, 38, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 80%, rgba(122, 21, 23, 0.12) 0%, transparent 60%),
+        rgba(10, 6, 4, 0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10010;
+    padding: 20px;
+    text-align: center;
+    animation: medal-ceremony-in 0.4s ease-out;
+}
+@keyframes medal-ceremony-in {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Skip button — small, top-right, non-intrusive */
+.medal-skip-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--gold-bright);
+    border: 2px solid var(--gold-dark);
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    padding: 8px 12px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s ease, background 0.15s ease;
+    z-index: 2;
+    touch-action: manipulation;
+}
+.medal-skip-btn:hover,
+.medal-skip-btn:active {
+    opacity: 1;
+    background: rgba(217, 154, 38, 0.2);
+}
+
+/* The tappable stage — covers the whole overlay so a tap anywhere advances */
+.medal-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 380px;
+    width: 100%;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Medal sprite container — sits behind the name */
+.medal-sprite-wrap {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+}
+.medal-sprite {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 8px 0 rgba(0,0,0,0.6)) drop-shadow(0 0 24px rgba(252,208,83,0.5));
+}
+
+/* Medal name and description */
+.medal-name {
+    font-family: var(--font-pixel);
+    font-size: 18px;
+    color: var(--gold-bright);
+    text-shadow: 2px 2px 0 #000, 0 0 20px rgba(252,208,83,0.6);
+    margin-bottom: 12px;
+    line-height: 1.4;
+    letter-spacing: 1px;
+}
+.medal-desc {
+    font-family: var(--font-reading);
+    font-style: italic;
+    font-size: 16px;
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: 22px;
+    line-height: 1.4;
+    max-width: 320px;
+}
+
+/* Progress indicator (e.g., 2 / 5) */
+.medal-progress {
+    font-family: var(--font-pixel);
+    font-size: 9px;
+    color: var(--gold-mid);
+    opacity: 0.8;
+    margin-bottom: 22px;
+    letter-spacing: 1px;
+}
+
+/* Tap hint — blinks so it feels interactive */
+.medal-tap-hint {
+    font-family: var(--font-pixel);
+    font-size: 10px;
+    color: var(--gold-bright);
+    opacity: 0.6;
+    animation: medal-blink 1.2s infinite alternate ease-in-out;
+    letter-spacing: 1px;
+}
+@keyframes medal-blink {
+    0%   { opacity: 0.35; }
+    100% { opacity: 1; }
+}
+
+/* ---- Reveal animation: fires every time a new medal appears ---- */
+/* JS adds .reveal to .medal-stage, then removes it before the next medal. */
+.medal-stage.reveal .medal-sprite-wrap {
+    animation: medal-sprite-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes medal-sprite-in {
+    0%   { transform: translateY(-40px) scale(0.4); opacity: 0; }
+    55%  { transform: translateY(0)     scale(1.08); opacity: 1; }
+    100% { transform: translateY(0)     scale(1);    opacity: 1; }
+}
+.medal-stage.reveal .medal-name {
+    animation: medal-fade-in 0.35s ease-out 0.25s both;
+}
+.medal-stage.reveal .medal-desc {
+    animation: medal-fade-in 0.35s ease-out 0.4s both;
+}
+.medal-stage.reveal .medal-progress {
+    animation: medal-fade-in 0.35s ease-out 0.55s both;
+}
+@keyframes medal-fade-in {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
