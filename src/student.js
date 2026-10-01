@@ -208,9 +208,9 @@ async function loadQuestion(questionId) {
         if (!qData || !qData.text) throw new Error("Peti tidak ditemukan!");
 
         const rarity = qData.rarity ? qData.rarity.toLowerCase().trim() : 'common';
-        const isRealChest = qData.chest_type !== 'bomb' && qData.chest_type !== 'hint';
+        const usesClaims = qData.chest_type !== 'hint';   // real chests AND bombs obey max_uses
 
-        if (isRealChest) {
+        if (usesClaims) {
             // 🔒 max_uses — checked against the SERVER right now (not a stale local counter)
             const maxUses = qData.max_uses || 99;
             const claims = await fetchChestClaims(questionId);
@@ -327,6 +327,29 @@ async function startChestSequence(qData, rarity) {
         chestOverlay.classList.add('hidden');
         resetToScanner();
         return;
+    }
+
+    // 💣 max_uses for bomb chests: opening a bomb IS the event, so claim it on the
+    // server right now, BEFORE the shake/announcement/explosion. If another student
+    // already took the last slot, this chest is locked for this one.
+    if (isBomb && currentUser && currentQuestionId && currentQuestionId !== 'TEST_BOMB') {
+        let bombClaim = null;
+        try {
+            bombClaim = await claimChest(currentQuestionId, qData.max_uses || 99);
+        } catch (e) {
+            console.warn('Bomb claim error:', e);
+            chestOverlay.classList.add('hidden');
+            alert('Gagal terhubung. Coba buka peti lagi.');
+            resetToScanner();
+            return;
+        }
+        if (!bombClaim.won) {
+            currentUser.globalQuestionUses[currentQuestionId] = Math.max(bombClaim.count, qData.max_uses || 99);
+            chestOverlay.classList.add('hidden');
+            const lockedOverlay = document.getElementById('locked-overlay');
+            if (lockedOverlay) lockedOverlay.classList.remove('hidden');
+            return;   // "CARI PETI LAIN" button calls resetToScanner()
+        }
     }
 
     // Shake violently for tactile suspense
