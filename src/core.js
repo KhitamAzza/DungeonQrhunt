@@ -103,6 +103,172 @@ async function loadLootTable() {
 window.loadLootTable = loadLootTable;
 let lootTableLoaded = loadLootTable();
 
+// =============================================================================
+// SERVER TIME, CHEST CLAIMS & SHARED SCORING
+// =============================================================================
+
+// ---- Server clock ----------------------------------------------------------
+// Every device has its own clock (and some phones are WAY off). So all game
+// timing uses the Firebase server clock: we ask Firebase to stamp the time,
+// compare it to our local clock, and keep the difference as an offset.
+window.serverTimeOffset = 0;
+window.serverNow = () => Date.now() + window.serverTimeOffset;
+
+window.syncServerTime = async function (samples = 3) {
+    let best = null;
+    for (let i = 0; i < samples; i++) {
+        try {
+            const t0 = Date.now();
+            const res = await fetch(`${FIREBASE_URL}/serverTime.json?auth=${FIREBASE_SECRET}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ '.sv': 'timestamp' })
+            });
+            let serverTs = await res.json();
+            if (typeof serverTs !== 'number') {
+                const r2 = await fetch(`${FIREBASE_URL}/serverTime.json?auth=${FIREBASE_SECRET}`);
+                serverTs = await r2.json();
+            }
+            const t1 = Date.now();
+            if (typeof serverTs !== 'number') continue;
+            const rtt = t1 - t0;
+            // keep the sample with the lowest round-trip = most accurate
+            if (!best || rtt < best.rtt) best = { rtt, offset: serverTs - (t0 + t1) / 2 };
+        } catch (e) { /* try next sample */ }
+    }
+    if (best) window.serverTimeOffset = best.offset;
+    return !!best;
+};
+
+// End of game = server-stamped startTime + duration. (Old records that still
+// have an explicit endTime keep working.)
+window.getGameEnd = function (settings) {
+    if (!settings) return null;
+    if (typeof settings.endTime === 'number') return settings.endTime;
+    if (typeof settings.startTime === 'number' && settings.durationMinutes) {
+        return settings.startTime + settings.durationMinutes * 60000;
+    }
+    return null;
+};
+
+// ---- max_uses: enforced on the SERVER side ---------------------------------
+// Each correct answer on a real chest POSTs a claim to /chestClaims/<qId>.
+// Firebase generates the push-key on the server, so keys sort in the order the
+// claims actually landed. Everybody reads the same list; the first `max_uses`
+// distinct students win. No stale local counters involved.
+function rankClaims(data) {
+    if (!data) return [];
+    const seen = new Set();
+    const out = [];
+    Object.keys(data).sort().forEach(key => {
+        const pwd = data[key] && data[key].pwd;
+        if (!pwd || seen.has(pwd)) return;
+        seen.add(pwd);
+        out.push({ key, pwd });
+    });
+    return out;
+}
+
+window.fetchChestClaims = async function (qId) {
+    const res = await fetch(`${FIREBASE_URL}/chestClaims/${qId}.json?auth=${FIREBASE_SECRET}`);
+    return rankClaims(await res.json());
+};
+
+window.fetchAllChestClaimCounts = async function () {
+    const res = await fetch(`${FIREBASE_URL}/chestClaims.json?auth=${FIREBASE_SECRET}`);
+    const data = (await res.json()) || {};
+    const counts = {};
+    for (const [qId, claims] of Object.entries(data)) counts[qId] = rankClaims(claims).length;
+    return counts;
+};
+
+// Returns { won, count }. Throws on network errors (caller shows "try again").
+window.claimChest = async function (qId, maxUses) {
+    const pwd = currentUser.password;
+    const post = await fetch(`${FIREBASE_URL}/chestClaims/${qId}.json?auth=${FIREBASE_SECRET}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pwd, name: currentUser.name, ts: { '.sv': 'timestamp' } })
+    });
+    if (!post.ok) throw new Error('claim write failed');
+    const ranked = await window.fetchChestClaims(qId);
+    const idx = ranked.findIndex(c => c.pwd === pwd);
+    return { won: idx !== -1 && idx < maxUses, count: ranked.length };
+};
+
+// ---- Miss limit: ONE rule for live play AND re-login --------------------------
+// A "miss" = wrong answer OR timeout on a real chest.
+//   penilaian -> 1st miss locks the chest
+//   casual    -> 3rd miss locks the chest
+//   latihan   -> never locks
+window.shouldLockChest = function (mode, misses) {
+    if (mode === 'penilaian') return misses >= 1;
+    if (mode === 'latihan') return false;
+    return misses >= 3;
+};
+
+// ---- ONE scoring function, used by BOTH student and teacher ----------------
+// Rules (so the phone and the leaderboard can never disagree):
+//  - real chest: the student's first CORRECT submission counts, worth its
+//    stored points_earned (so retry/speed multipliers are respected)
+//  - wrong answers / timeouts: 0
+//  - bomb: -penalty, once per bomb chest
+//  - hint chests: ignored
+window.computeScores = function (submissions, questions) {
+    const result = {};
+    const list = Array.isArray(submissions) ? submissions : Object.values(submissions || {});
+    questions = questions || {};
+    list.slice()
+        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+        .forEach(sub => {
+            const pwd = sub.student_password;
+            if (!pwd) return;
+            const r = result[pwd] || (result[pwd] = {
+                rawScore: 0,
+                correctCount: 0,
+                answeredRarities: { common: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 },
+                scored: new Set(),
+                bombed: new Set()
+            });
+            const qId = sub.question_id;
+            const q = questions[qId];
+            const isBomb = sub.is_bomb === true || qId === 'BOMB_TRAP' || (q && q.chest_type === 'bomb');
+
+            if (isBomb) {
+                if (!r.bombed.has(qId)) {
+                    r.bombed.add(qId);
+                    r.rawScore += (typeof sub.points_earned === 'number' && sub.points_earned < 0)
+                        ? sub.points_earned
+                        : -GAME_CONFIG.bombPenalty;
+                }
+                return;
+            }
+            if (!q || q.chest_type === 'hint') return;
+            if (sub.is_correct !== true || r.scored.has(qId)) return;
+
+            r.scored.add(qId);
+            const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
+            r.rawScore += (typeof sub.points_earned === 'number')
+                ? sub.points_earned
+                : (GAME_CONFIG.rarityPoints[rarity] || 10);
+            r.correctCount++;
+            if (r.answeredRarities[rarity] !== undefined) r.answeredRarities[rarity]++;
+        });
+    return result;
+};
+
+window.computeMaxScore = function (questions) {
+    let max = 0;
+    for (const q of Object.values(questions || {})) {
+        if (!q) continue;
+        const type = q.chest_type ? q.chest_type.toLowerCase().trim() : 'reward';
+        if (type === 'hint' || type === 'bomb') continue;
+        const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
+        max += (GAME_CONFIG.rarityPoints[rarity] || 10);
+    }
+    return max || 1;
+};
+
 // Start fetching remote config immediately
 window.gameConfigLoaded = fetchGameConfig();
 
@@ -367,7 +533,7 @@ loginBtn.addEventListener('click', async () => {
                         // Fetch past submissions
             const subsRes = await fetch(`${FIREBASE_URL}/submissions.json?auth=${FIREBASE_SECRET}`);
             const allSubs = await subsRes.json();
-            currentUser.globalQuestionUses = {};
+            currentUser.globalQuestionUses = await fetchAllChestClaimCounts().catch(() => ({}));
 
             // Single pass: reconstruct per-student state AND global claim counts
             const byQuestion = {};   // qId -> earliest submission by THIS student
@@ -376,8 +542,13 @@ loginBtn.addEventListener('click', async () => {
                 Object.values(allSubs).forEach(sub => {
                     // --- Per-student state ---
                     if (sub.student_password === currentUser.password) {
-                        if (sub.is_correct === true) {
+                        if (sub.is_correct === true || sub.is_bomb === true) {
                             currentUser.answeredQuestions.add(sub.question_id);
+                        }
+                        // Count misses (wrong answers + timeouts) per chest, from the server record
+                        if (sub.is_correct !== true && !sub.is_bomb && sub.question_id !== 'BOMB_TRAP') {
+                            currentUser.questionTimeouts[sub.question_id] =
+                                (currentUser.questionTimeouts[sub.question_id] || 0) + 1;
                         }
                         // Track earliest submission per question, for first-try reconstruction
                         const qId = sub.question_id;
@@ -385,13 +556,16 @@ loginBtn.addEventListener('click', async () => {
                             byQuestion[qId] = sub;
                         }
                     }
-                    // --- Global max_uses cap ---
-                    // Only correct, non-bomb submissions consume the chest.
-                    if (sub.is_correct === true && !sub.is_bomb) {
-                        const qId = sub.question_id;
-                        currentUser.globalQuestionUses[qId] = (currentUser.globalQuestionUses[qId] || 0) + 1;
-                    }
+                    // (global max_uses is now read from /chestClaims — see claimChest in this file)
                 });
+            }
+
+            // Re-apply the miss limit so logging out/in can't reset a locked chest
+            // (and the 0.7x / 0.5x retry multipliers survive a re-login too).
+            for (const [qId, misses] of Object.entries(currentUser.questionTimeouts)) {
+                if (shouldLockChest(GAME_CONFIG.gameMode || 'casual', misses)) {
+                    currentUser.answeredQuestions.add(qId);
+                }
             }
 
             // Reconstruct first-try tracking from this student's earliest attempts
@@ -424,28 +598,20 @@ loginBtn.addEventListener('click', async () => {
             }
             if (currentUser.maxPossibleScore === 0) currentUser.maxPossibleScore = 1;
 
-            // Rebuild correctCount / rawScore / answeredRarities from past submissions
+            // Rebuild correctCount / rawScore / answeredRarities with the SAME
+            // scorer the teacher leaderboard uses (bomb penalties included).
             if (qData && allSubs) {
-                Object.values(allSubs).forEach(sub => {
-                    if (sub.student_password !== currentUser.password) return;
-                    if (sub.is_bomb) return;
-                    const q = qData[sub.question_id];
-                    if (!q) return;
-
-                                        const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
-                    const chestType = q.chest_type ? q.chest_type.toLowerCase().trim() : 'reward';
-                    const isCorrectSub = chestType !== 'bomb' && sub.selected_answer === q.correct_answer;
-                    if (isCorrectSub) {
-                        if (currentUser.answeredRarities[rarity] !== undefined) {
-                            currentUser.answeredRarities[rarity]++;
-                        }
-                        currentUser.correctCount++;
-                        currentUser.rawScore += (typeof sub.points_earned === 'number'
-                            ? sub.points_earned
-                            : (GAME_CONFIG.rarityPoints[rarity] || 10));
-                    }
-                });
+                const mine = computeScores(Object.values(allSubs), qData)[currentUser.password];
+                if (mine) {
+                    currentUser.rawScore = mine.rawScore;
+                    currentUser.correctCount = mine.correctCount;
+                    currentUser.answeredRarities = mine.answeredRarities;
+                }
             }
+            // Medals: 'brave' must survive a re-login, so rebuild it from past submissions.
+            currentUser.hitBomb = !!allSubs && Object.values(allSubs).some(sub =>
+                sub.student_password === currentUser.password && sub.is_bomb === true);
+
             // Check if already finished — counts ONLY chests THIS student personally
             // opened (answeredQuestions). Chests other students used up their max_uses
             // on are handled separately by the "locked" overlay when this student
@@ -465,6 +631,7 @@ loginBtn.addEventListener('click', async () => {
             displayName.textContent = currentUser.name;
             displayClass.textContent = currentUser.class;
 
+            await syncServerTime();
             await checkGameStatusAndUpdateTimer();
 
            if (isFinished) {
@@ -481,6 +648,7 @@ loginBtn.addEventListener('click', async () => {
 } else {
     resetStudentUI();
     showGameOver();
+    waitForGameStart();
 }
         } else {
             alert("Password tidak ditemukan. Silakan hubungi Guru / Admin.");
@@ -495,12 +663,33 @@ loginBtn.addEventListener('click', async () => {
     }
 });
 
+// If the student logs in BEFORE the teacher presses start, keep checking and
+// drop them into the game the moment it starts (no re-login needed).
+let waitingForGameTimer = null;
+function waitForGameStart() {
+    clearInterval(waitingForGameTimer);
+    waitingForGameTimer = setInterval(async () => {
+        if (!currentUser) { clearInterval(waitingForGameTimer); return; }
+        await checkGameStatusAndUpdateTimer();
+        if (isGameActive) {
+            clearInterval(waitingForGameTimer);
+            resetStudentUI();
+            showScreen(studentDashboard);
+            updateProgressTracker();
+            startStudentTimer();
+            startScanner();
+            startAnnouncementPolling();
+        }
+    }, 4000);
+}
+
 passwordInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') loginBtn.click();
 });
 
 function handleLogout() {
     currentUser = null;
+    if (typeof waitingForGameTimer !== 'undefined') clearInterval(waitingForGameTimer);
     if (window.studentTimerInterval) clearInterval(window.studentTimerInterval);
     if (window.html5QrcodeScanner) {
         window.html5QrcodeScanner.stop().then(() => {

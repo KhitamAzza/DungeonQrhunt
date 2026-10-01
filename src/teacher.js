@@ -67,10 +67,12 @@ async function checkTeacherGameStatus() {
     try {
         const response = await fetch(`${FIREBASE_URL}/gameSettings.json?auth=${FIREBASE_SECRET}`);
         const settings = await response.json();
-        if (settings && settings.isActive) {
-            const now = Date.now();
-            if (now < settings.endTime) {
-                const minsLeft = Math.ceil((settings.endTime - now) / 60000);
+        await syncServerTime(1);
+        const endTime = getGameEnd(settings);
+        if (settings && settings.isActive && endTime) {
+            const now = serverNow();
+            if (now < endTime) {
+                const minsLeft = Math.ceil((endTime - now) / 60000);
                 gameStatusText.textContent = `🟢 GAME AKTIF - Sisa Waktu: ~${minsLeft} menit.`;
                 gameStatusText.style.color = "var(--green-emerald)";
                 isGameActive = true;
@@ -99,12 +101,12 @@ if (startGameBtn) {
             alert("Masukkan durasi permainan yang valid (dalam menit).");
             return;
         }
-        const now = Date.now();
+        // startTime is stamped by the Firebase SERVER (not this PC's clock).
+        // End of game = startTime + durationMinutes, derived by getGameEnd().
         const settings = {
             isActive: true,
             durationMinutes: duration,
-            startTime: now,
-            endTime: now + (duration * 60 * 1000)
+            startTime: { '.sv': 'timestamp' }
         };
         startGameBtn.disabled = true;
         startGameBtn.textContent = "MEMULAI...";
@@ -166,49 +168,21 @@ async function calculateAndRenderLeaderboard() {
         const questions = questionsRes || {};
         const submissions = submissionsRes ? Object.values(submissionsRes) : [];
 
-        let maxPossibleScore = 0;
-        for (const qId in questions) {
-            const q = questions[qId];
-            if (q && (q.chest_type === 'bomb' || q.chest_type === 'hint')) continue;
-            const rarity = q.rarity ? q.rarity.toLowerCase().trim() : 'common';
-            maxPossibleScore += (GAME_CONFIG.rarityPoints[rarity] || 10);
-        }
-        if (maxPossibleScore === 0) maxPossibleScore = 1;
+        const maxPossibleScore = computeMaxScore(questions);
         currentMaxScore = maxPossibleScore;
 
+        // Same scorer the student's phone uses -> numbers always match.
+        const computed = computeScores(submissions, questions);
         const scores = {};
         for (const [password, data] of Object.entries(students)) {
-            scores[password] = { name: data.name, class: data.class, rawScore: 0, questionsAnswered: new Set() };
+            const c = computed[password];
+            scores[password] = {
+                name: data.name,
+                class: data.class,
+                rawScore: c ? c.rawScore : 0,
+                questionsAnswered: new Set([...(c ? c.scored : []), ...(c ? c.bombed : [])])
+            };
         }
-
-        submissions.forEach(sub => {
-            const qId = sub.question_id;
-            const studentPwd = sub.student_password;
-            if (!scores[studentPwd]) return;
-
-            const question = questions[qId];
-
-            if (qId === 'BOMB_TRAP' || (question && question.chest_type === 'bomb')) {
-                if (!scores[studentPwd].questionsAnswered.has(qId)) {
-                    scores[studentPwd].questionsAnswered.add(qId);
-                    scores[studentPwd].rawScore -= GAME_CONFIG.bombPenalty;
-                }
-                return;
-            }
-
-            if (question && question.chest_type === 'hint') return;
-            if (!question) return;
-
-            if (!scores[studentPwd].questionsAnswered.has(qId)) {
-                scores[studentPwd].questionsAnswered.add(qId);
-                if (sub.selected_answer === question.correct_answer) {
-                    const rarity = question.rarity ? question.rarity.toLowerCase().trim() : 'common';
-                    scores[studentPwd].rawScore += (typeof sub.points_earned === 'number'
-                        ? sub.points_earned
-                        : (GAME_CONFIG.rarityPoints[rarity] || 10));
-                }
-            }
-        });
 
         const leaderboard = Object.values(scores).map(s => {
             const percentage = (s.rawScore / maxPossibleScore) * 100;
@@ -296,7 +270,8 @@ if (purgeSubmissionsBtn) {
             await Promise.all([
                 fetch(`${FIREBASE_URL}/submissions.json?auth=${FIREBASE_SECRET}`, { method: 'DELETE' }),
                 fetch(`${FIREBASE_URL}/announcements.json?auth=${FIREBASE_SECRET}`, { method: 'DELETE' }),
-                fetch(`${FIREBASE_URL}/inventory.json?auth=${FIREBASE_SECRET}`, { method: 'DELETE' })
+                fetch(`${FIREBASE_URL}/inventory.json?auth=${FIREBASE_SECRET}`, { method: 'DELETE' }),
+                fetch(`${FIREBASE_URL}/chestClaims.json?auth=${FIREBASE_SECRET}`, { method: 'DELETE' })
             ]);
             alert("✅ Seluruh jawaban & progres siswa telah dibersihkan!");
             calculateAndRenderLeaderboard();
@@ -415,7 +390,9 @@ async function isGameCurrentlyActive() {
         const res = await fetch(`${FIREBASE_URL}/gameSettings.json?auth=${FIREBASE_SECRET}`);
         const settings = await res.json();
         if (!settings || !settings.isActive) return false;
-        return Date.now() < settings.endTime;
+        await syncServerTime(1);
+        const end = getGameEnd(settings);
+        return !!end && serverNow() < end;
     } catch (error) {
         return true;
     }

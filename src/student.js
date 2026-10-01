@@ -72,39 +72,56 @@ const CHEST_SUSPENSE_PHRASES = [
 // =============================================================================
 // 2. GAME TIMER & STATUS
 // =============================================================================
+window.gameEndTime = null;
+
+// Draws the countdown from the SERVER-based clock. Runs every second without
+// any network call, so the timer on every device counts down the same.
+function renderStudentTimer() {
+    if (!window.gameEndTime) return;
+    const remaining = window.gameEndTime - serverNow();
+    if (remaining <= 0) {
+        isGameActive = false;
+        if (studentTimer) studentTimer.textContent = "00:00";
+        return;
+    }
+    isGameActive = true;
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    if (studentTimer) {
+        studentTimer.textContent = `⏳ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+}
+
 async function checkGameStatusAndUpdateTimer() {
     try {
         const response = await fetch(`${FIREBASE_URL}/gameSettings.json?auth=${FIREBASE_SECRET}`);
         const settings = await response.json();
-        if (settings && settings.isActive && settings.endTime) {
-            const now = Date.now();
-            const remaining = settings.endTime - now;
-            if (remaining <= 0) {
-                isGameActive = false;
-                if (studentTimer) studentTimer.textContent = "00:00";
-            } else {
-                isGameActive = true;
-                const mins = Math.floor(remaining / 60000);
-                const secs = Math.floor((remaining % 60000) / 1000);
-                if (studentTimer) {
-                    studentTimer.textContent = `⏳ ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                }
-            }
+        const end = getGameEnd(settings);
+        if (settings && settings.isActive && end) {
+            window.gameEndTime = end;
+            renderStudentTimer();
         } else {
+            window.gameEndTime = null;
             isGameActive = false;
             if (studentTimer) studentTimer.textContent = "⏳ SELESAI";
         }
     } catch (error) {
+        // Network hiccup: keep the last known state instead of kicking the student out.
         console.warn("Timer status error:", error);
-        isGameActive = false;
+        if (window.gameEndTime) renderStudentTimer();
+        else isGameActive = false;
     }
 }
 
 function startStudentTimer() {
     if (studentTimerInterval) clearInterval(studentTimerInterval);
     checkGameStatusAndUpdateTimer();
+    let tick = 0;
     studentTimerInterval = setInterval(async () => {
-        await checkGameStatusAndUpdateTimer();
+        tick++;
+        if (tick % 60 === 0) await syncServerTime(1);      // re-sync clock every minute
+        if (tick % 5 === 0) await checkGameStatusAndUpdateTimer(); // re-read settings every 5s (teacher may stop early)
+        else renderStudentTimer();
         if (!isGameActive) {
             clearInterval(studentTimerInterval);
             showGameOver();
@@ -162,6 +179,7 @@ if (manualSubmitBtn && manualInput) {
 // 4. QUESTION LOADING (ALL GO THROUGH RETRO CHEST FLOW)
 // =============================================================================
 async function loadQuestion(questionId) {
+    await checkGameStatusAndUpdateTimer();
     if (!isGameActive) {
         showGameOver();
         return;
@@ -190,13 +208,25 @@ async function loadQuestion(questionId) {
         if (!qData || !qData.text) throw new Error("Peti tidak ditemukan!");
 
         const rarity = qData.rarity ? qData.rarity.toLowerCase().trim() : 'common';
-        const maxUses = qData.max_uses || 99;
-        const currentUses = (currentUser.globalQuestionUses && currentUser.globalQuestionUses[questionId]) || 0;
+        const isRealChest = qData.chest_type !== 'bomb' && qData.chest_type !== 'hint';
 
-        if (currentUses >= maxUses) {
-            const lockedOverlay = document.getElementById('locked-overlay');
-            if (lockedOverlay) lockedOverlay.classList.remove('hidden');
-            return;
+        if (isRealChest) {
+            // 🔒 max_uses — checked against the SERVER right now (not a stale local counter)
+            const maxUses = qData.max_uses || 99;
+            const claims = await fetchChestClaims(questionId);
+            currentUser.globalQuestionUses[questionId] = claims.length;
+
+            if (claims.some(c => c.pwd === currentUser.password)) {
+                // I already took this one (e.g. on another device)
+                currentUser.answeredQuestions.add(questionId);
+                return loadQuestion(questionId);
+            }
+            if (claims.length >= maxUses) {
+                const lockedOverlay = document.getElementById('locked-overlay');
+                if (lockedOverlay) lockedOverlay.classList.remove('hidden');
+                updateProgressTracker();
+                return;
+            }
         }
 
         startChestSequence(qData, rarity);
@@ -460,15 +490,44 @@ function handleTimeUp(source) {
             currentUser.questionTimeouts[currentQuestionId] = 0;
         }
         currentUser.questionTimeouts[currentQuestionId]++;
+
+        // Save the timeout on the server so it counts as a miss after re-login.
+        // (Wrong answers are already saved by submitAnswer; timeouts weren't.)
+        fetch(`${FIREBASE_URL}/submissions.json?auth=${FIREBASE_SECRET}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                student_password: currentUser.password,
+                student_name: currentUser.name,
+                student_class: currentUser.class,
+                question_id: currentQuestionId,
+                selected_answer: 'TIMEOUT',
+                is_correct: false,
+                is_timeout: true,
+                points_earned: 0,
+                timestamp: { '.sv': 'timestamp' }
+            })
+        }).catch(e => console.warn('Timeout sync error:', e));
     }
-    
+
+    // Same miss limit as wrong answers: 3rd miss locks in casual,
+    // 1st miss locks in penilaian, latihan never locks.
+    let lockedNow = false;
+    if (currentQuestionId && currentUser) {
+        const misses = currentUser.questionTimeouts[currentQuestionId] || 0;
+        if (shouldLockChest(GAME_CONFIG.gameMode || 'casual', misses)
+            && !currentUser.answeredQuestions.has(currentQuestionId)) {
+            currentUser.answeredQuestions.add(currentQuestionId);
+            lockedNow = true;
+        }
+    }
 
     if (source === 'parchment') {
         const rpgQText = document.getElementById('parchment-q-text');
         const rpgQOptions = document.getElementById('parchment-q-options');
 
         if (rpgQText) {
-            rpgQText.textContent = "WAKTU HABIS!";
+            rpgQText.textContent = lockedNow ? "WAKTU HABIS! PETI TERKUNCI 🔒" : "WAKTU HABIS!";
             rpgQText.classList.add('time-up-text');
         }
         if (rpgQOptions) rpgQOptions.innerHTML = '';
@@ -477,6 +536,11 @@ function handleTimeUp(source) {
         setTimeout(() => {
             resetToScanner();
             if (rpgQText) rpgQText.classList.remove('time-up-text');
+            if (lockedNow) {
+                // chest just got locked — refresh tracker, maybe that was the last one
+                updateProgressTracker();
+                checkPersonalFinishCondition();
+            }
         }, 1800);
     }
 }
@@ -484,6 +548,7 @@ function handleTimeUp(source) {
 async function submitAnswer(selectedOption) {
     clearInterval(questionTimerInterval);
     if (!currentUser || !currentQuestionId) return;
+    await checkGameStatusAndUpdateTimer();
     if (!isGameActive) {
         showGameOver();
         return;
@@ -505,6 +570,38 @@ async function submitAnswer(selectedOption) {
     const isCorrect = qData && (selectedOption === qData.correct_answer);
     const rarity = qData && qData.rarity ? qData.rarity.toLowerCase().trim() : 'common';
     const basePoints = (GAME_CONFIG.rarityPoints && GAME_CONFIG.rarityPoints[rarity]) || 10;
+
+    // 🔒 max_uses — a correct answer must WIN the chest on the server first.
+    // Done before any local state/score changes so a failure is safely retryable.
+    if (isCorrect && qData && qData.chest_type !== 'bomb' && qData.chest_type !== 'hint') {
+        let claim = null;
+        try {
+            claim = await claimChest(currentQuestionId, qData.max_uses || 99);
+        } catch (e) {
+            console.warn("Claim error:", e);
+            if (rpgQText) rpgQText.textContent = "Gagal terhubung. Tap untuk mencoba lagi.";
+            if (rpgQOptions) {
+                rpgQOptions.innerHTML = `<button class="option-btn" onclick="loadQuestion('${currentQuestionId}')">COBA LAGI</button>`;
+            }
+            return;
+        }
+        if (!claim.won) {
+            // Someone else took the last slot while this student was answering.
+            currentUser.globalQuestionUses[currentQuestionId] = Math.max(claim.count, qData.max_uses || 99);
+            if (rpgQText) {
+                rpgQText.textContent = "PETI SUDAH DIAMBIL SISWA LAIN! 😢";
+                rpgQText.style.color = "var(--red-crimson)";
+            }
+            if (window.RetroAudio) window.RetroAudio.playWrong();
+            updateProgressTracker();
+            if (checkPersonalFinishCondition()) return;
+            setTimeout(() => {
+                resetToScanner();
+                if (rpgQText) rpgQText.style.color = "var(--ink-dark)";
+            }, 2000);
+            return;
+        }
+    }
 
         const timerTextEl = document.querySelector('.parchment-timer-text');
     let timeRemaining = 0;
@@ -552,7 +649,7 @@ async function submitAnswer(selectedOption) {
         selected_answer: selectedOption,
         is_correct: isCorrect,
         points_earned: pointsEarned,
-        timestamp: Date.now()
+        timestamp: { '.sv': 'timestamp' }
     };
 
     try {
@@ -580,7 +677,9 @@ async function submitAnswer(selectedOption) {
         } else if (mode === 'penilaian') {
             currentUser.answeredQuestions.add(currentQuestionId);
         }
-        currentUser.globalQuestionUses[currentQuestionId] = (currentUser.globalQuestionUses[currentQuestionId] || 0) + 1;
+        if (isCorrect && qData && qData.chest_type !== 'bomb' && qData.chest_type !== 'hint') {
+            currentUser.globalQuestionUses[currentQuestionId] = (currentUser.globalQuestionUses[currentQuestionId] || 0) + 1;
+        }
 
         if (isCorrect) {
     currentUser.correctCount++;
@@ -672,7 +771,16 @@ async function submitAnswer(selectedOption) {
     }
 }
 
+async function refreshGlobalUses() {
+    if (!currentUser) return;
+    try {
+        currentUser.globalQuestionUses = await fetchAllChestClaimCounts();
+        updateProgressTracker();
+    } catch (e) { /* keep old counts */ }
+}
+
 function resetToScanner() {
+    refreshGlobalUses();
     if (feedbackArea) feedbackArea.classList.add('hidden');
     if (questionModal) questionModal.classList.add('hidden');
     parchmentOverlay.classList.add('hidden');
@@ -876,6 +984,9 @@ setTimeout(() => document.body.classList.remove('screen-shake'), 300);
     if (currentUser) {
     currentUser.hitBomb = true;
     await submitBombPenalty();
+        if (!currentUser.answeredQuestions.has(currentQuestionId)) {
+            currentUser.rawScore = (currentUser.rawScore || 0) - GAME_CONFIG.bombPenalty;
+        }
         currentUser.answeredQuestions.add(currentQuestionId);
         currentUser.globalQuestionUses[currentQuestionId] = (currentUser.globalQuestionUses[currentQuestionId] || 0) + 1;
         updateProgressTracker();
@@ -902,7 +1013,7 @@ async function submitBombPenalty() {
         selected_answer: 'BOMB',
         is_bomb: true,
         points_earned: -GAME_CONFIG.bombPenalty,
-        timestamp: Date.now()
+        timestamp: { '.sv': 'timestamp' }
     };
 
     try {
@@ -1062,7 +1173,7 @@ async function triggerAnnouncement(message) {
         await fetch(`${FIREBASE_URL}/announcements.json?auth=${FIREBASE_SECRET}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: message, timestamp: Date.now() })
+            body: JSON.stringify({ text: message, timestamp: { '.sv': 'timestamp' } })
         });
     } catch (error) {
         console.warn("Announcement push error:", error);
